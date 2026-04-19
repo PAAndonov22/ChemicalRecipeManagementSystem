@@ -39,3 +39,20 @@
 
 # debug information files
 *.dwo
+
+# Node / Frontend / API
+node_modules/
+dist/
+coverage/
+*.log
+*.tsbuildinfo
+
+# Environment and local DB
+.env
+.env.*
+!.env.example
+apps/api/data/
+
+# IDE
+.vscode/
+.idea/
