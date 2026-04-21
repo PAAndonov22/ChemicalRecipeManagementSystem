@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | CRMS</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="brand-mark">CRMS Control</div>
+        <h1>Create Account</h1>
+        <p class="lede">Register as a chemist or technician. Administrative access is intentionally not self-service.</p>
+        <div id="status" class="status"></div>
+        <form id="register-form" class="form-grid">
+            <div class="field">
+                <label for="username">Username</label>
+                <input id="username" required>
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" type="email" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" type="password" required>
+            </div>
+            <div class="field">
+                <label for="roleName">Requested Role</label>
+                <select id="roleName">
+                    <option value="Technician">Technician</option>
+                    <option value="Chemist">Chemist</option>
+                </select>
+            </div>
+            <button class="button" type="submit">Register</button>
+        </form>
+        <div class="helper-link">Already registered? <a href="/login.html">Return to login</a></div>
+    </div>
+    <script type="module" src="/assets/js/pages/register.js"></script>
+</body>
+</html>
