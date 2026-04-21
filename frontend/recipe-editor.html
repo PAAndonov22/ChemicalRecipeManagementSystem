@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Editor | CRMS</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside id="sidebar" class="sidebar"></aside>
+        <div class="content-shell">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1 id="page-title"></h1>
+                    <p id="page-subtitle"></p>
+                </div>
+                <div id="user-chip" class="user-chip"></div>
+            </header>
+            <main class="page-grid">
+                <section class="card">
+                    <div id="form-status" class="status"></div>
+                    <form id="recipe-form" class="form-grid">
+                        <div class="cards-grid">
+                            <div class="field">
+                                <label for="code">Recipe Code</label>
+                                <input id="code" required>
+                            </div>
+                            <div class="field">
+                                <label for="name">Recipe Name</label>
+                                <input id="name" required>
+                            </div>
+                            <div class="field">
+                                <label for="status">Status</label>
+                                <select id="status">
+                                    <option value="draft">Draft</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="description">Description</label>
+                            <textarea id="description" required></textarea>
+                        </div>
+                        <div class="cards-grid">
+                            <div class="field">
+                                <label for="title">Version Title</label>
+                                <input id="title" required>
+                            </div>
+                            <div class="field">
+                                <label for="changeSummary">Change Summary</label>
+                                <input id="changeSummary" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="summary">Version Summary</label>
+                            <textarea id="summary" required></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="instructions">Instructions</label>
+                            <textarea id="instructions" required></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="safetyNotes">Safety Notes</label>
+                            <textarea id="safetyNotes" required></textarea>
+                        </div>
+                        <div class="panel">
+                            <div class="toolbar">
+                                <div>
+                                    <div class="section-title">Ingredients</div>
+                                    <div class="subtle">Each save creates a new version snapshot with its own ingredient set.</div>
+                                </div>
+                                <button id="add-ingredient" class="button-secondary" type="button">Add Ingredient</button>
+                            </div>
+                            <div id="ingredient-rows" style="margin-top: 16px;"></div>
+                        </div>
+                        <button class="button" type="submit">Save Recipe</button>
+                    </form>
+                </section>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="/assets/js/pages/recipe-editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs | CRMS</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside id="sidebar" class="sidebar"></aside>
+        <div class="content-shell">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1 id="page-title"></h1>
+                    <p id="page-subtitle"></p>
+                </div>
+                <div id="user-chip" class="user-chip"></div>
+            </header>
+            <main class="page-grid">
+                <section class="card">
+                    <form id="audit-filter-form" class="inline-form">
+                        <div class="field">
+                            <label for="actionFilter">Action</label>
+                            <input id="actionFilter" placeholder="Optional exact action">
+                        </div>
+                        <div class="field">
+                            <label for="limitFilter">Limit</label>
+                            <select id="limitFilter">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <button class="button" type="submit">Refresh</button>
+                    </form>
+                </section>
+                <section id="audit-results" class="card"></section>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="/assets/js/pages/audit-logs.js"></script>
+</body>
+</html>

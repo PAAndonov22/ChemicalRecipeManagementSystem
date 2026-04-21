@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports | CRMS</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside id="sidebar" class="sidebar"></aside>
+        <div class="content-shell">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1 id="page-title"></h1>
+                    <p id="page-subtitle"></p>
+                </div>
+                <div id="user-chip" class="user-chip"></div>
+            </header>
+            <main class="page-grid">
+                <section id="status-grid" class="cards-grid"></section>
+                <section class="card">
+                    <div class="section-title" style="margin-bottom: 12px;">Ingredient Usage</div>
+                    <div id="ingredient-usage"></div>
+                </section>
+                <section>
+                    <div class="section-title" style="margin-bottom: 12px;">Recent Activity</div>
+                    <div id="activity" class="list-cards"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="/assets/js/pages/reports.js"></script>
+</body>
+</html>
