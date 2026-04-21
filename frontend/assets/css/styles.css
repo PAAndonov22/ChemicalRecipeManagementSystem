@@ -1,17 +1,17 @@
 :root {
-    --bg: #f4efe3;
-    --bg-strong: #e6dcc8;
-    --surface: rgba(255, 250, 241, 0.9);
-    --surface-strong: #fffdf8;
-    --border: rgba(60, 48, 28, 0.14);
-    --text: #2c2517;
-    --text-soft: #645942;
-    --accent: #0f6d59;
-    --accent-strong: #084c3f;
-    --warn: #c7751c;
-    --danger: #a2342a;
-    --success: #2f7a3e;
-    --shadow: 0 24px 60px rgba(63, 43, 13, 0.12);
+    --bg: #eef6ff;
+    --bg-strong: #dcecff;
+    --surface: rgba(255, 255, 255, 0.9);
+    --surface-strong: #ffffff;
+    --border: rgba(47, 95, 154, 0.16);
+    --text: #15304f;
+    --text-soft: #5d7797;
+    --accent: #2f7de1;
+    --accent-strong: #1959b7;
+    --warn: #e59a2f;
+    --danger: #c24b4b;
+    --success: #2f9d71;
+    --shadow: 0 24px 60px rgba(30, 76, 132, 0.14);
     --radius: 22px;
     --radius-sm: 14px;
     --sidebar-width: 270px;
@@ -28,9 +28,9 @@ body {
     margin: 0;
     min-height: 100%;
     background:
-        radial-gradient(circle at top left, rgba(15, 109, 89, 0.18), transparent 35%),
-        radial-gradient(circle at bottom right, rgba(199, 117, 28, 0.16), transparent 30%),
-        linear-gradient(135deg, #efe6d4 0%, #f9f3e7 48%, #f2eadc 100%);
+        radial-gradient(circle at top left, rgba(47, 125, 225, 0.2), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(129, 190, 255, 0.24), transparent 32%),
+        linear-gradient(145deg, #f7fbff 0%, #edf5ff 52%, #e5f0ff 100%);
     color: var(--text);
     font-family: var(--font-body);
 }
@@ -88,8 +88,8 @@ button {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--warn));
-    box-shadow: 0 0 0 6px rgba(15, 109, 89, 0.1);
+    background: linear-gradient(135deg, #51a5ff, var(--accent-strong));
+    box-shadow: 0 0 0 6px rgba(47, 125, 225, 0.12);
 }
 
 .auth-card h1,
@@ -127,8 +127,8 @@ button {
 .field textarea {
     width: 100%;
     border-radius: 14px;
-    border: 1px solid rgba(67, 51, 27, 0.16);
-    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(74, 117, 173, 0.2);
+    background: rgba(255, 255, 255, 0.96);
     padding: 14px 16px;
     color: var(--text);
     transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
@@ -137,8 +137,8 @@ button {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-    border-color: rgba(15, 109, 89, 0.6);
-    box-shadow: 0 0 0 4px rgba(15, 109, 89, 0.12);
+    border-color: rgba(47, 125, 225, 0.6);
+    box-shadow: 0 0 0 4px rgba(47, 125, 225, 0.14);
     outline: none;
     transform: translateY(-1px);
 }
@@ -168,11 +168,11 @@ button {
 .button {
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
     color: white;
-    box-shadow: 0 12px 28px rgba(15, 109, 89, 0.22);
+    box-shadow: 0 12px 28px rgba(47, 125, 225, 0.24);
 }
 
 .button-secondary {
-    background: rgba(44, 37, 23, 0.08);
+    background: rgba(47, 125, 225, 0.1);
     color: var(--text);
 }
 
@@ -210,9 +210,9 @@ button {
 }
 
 .status.info {
-    background: rgba(15, 109, 89, 0.08);
+    background: rgba(47, 125, 225, 0.08);
     color: var(--accent-strong);
-    border-color: rgba(15, 109, 89, 0.18);
+    border-color: rgba(47, 125, 225, 0.18);
 }
 
 .status.error {
@@ -234,8 +234,9 @@ button {
 }
 
 .sidebar {
-    background: rgba(37, 31, 20, 0.86);
-    color: #f7f2e7;
+    background:
+        linear-gradient(180deg, rgba(20, 64, 116, 0.96) 0%, rgba(18, 52, 96, 0.96) 100%);
+    color: #eef6ff;
     padding: 30px 22px;
     position: sticky;
     top: 0;
@@ -243,7 +244,7 @@ button {
     display: flex;
     flex-direction: column;
     gap: 26px;
-    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06);
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 .sidebar .brand-mark {
@@ -268,7 +269,7 @@ button {
 
 .sidebar-link:hover,
 .sidebar-link.active {
-    background: rgba(255, 255, 255, 0.11);
+    background: rgba(122, 189, 255, 0.16);
     transform: translateX(2px);
 }
 
@@ -294,12 +295,12 @@ button {
 
 .user-chip {
     align-self: start;
-    background: rgba(255, 255, 255, 0.74);
+    background: rgba(255, 255, 255, 0.86);
     border: 1px solid var(--border);
     border-radius: 18px;
     padding: 12px 14px;
     min-width: 210px;
-    box-shadow: 0 12px 28px rgba(70, 48, 18, 0.08);
+    box-shadow: 0 12px 28px rgba(39, 82, 136, 0.1);
 }
 
 .user-chip strong,
@@ -326,7 +327,7 @@ button {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 22px;
-    box-shadow: 0 14px 36px rgba(63, 43, 13, 0.08);
+    box-shadow: 0 14px 36px rgba(39, 82, 136, 0.09);
 }
 
 .metric-value {
@@ -374,7 +375,7 @@ th,
 td {
     text-align: left;
     padding: 14px 10px;
-    border-bottom: 1px solid rgba(60, 48, 28, 0.1);
+    border-bottom: 1px solid rgba(47, 95, 154, 0.1);
     vertical-align: top;
 }
 
@@ -394,7 +395,7 @@ th {
     padding: 6px 10px;
     border-radius: 999px;
     font-size: 0.82rem;
-    background: rgba(15, 109, 89, 0.1);
+    background: rgba(47, 125, 225, 0.1);
     color: var(--accent-strong);
 }
 
@@ -437,13 +438,13 @@ th {
 }
 
 .history-card {
-    border-left: 4px solid rgba(15, 109, 89, 0.4);
+    border-left: 4px solid rgba(47, 125, 225, 0.42);
 }
 
 .empty-state {
     padding: 26px;
     border-radius: 18px;
-    border: 1px dashed rgba(60, 48, 28, 0.18);
+    border: 1px dashed rgba(47, 95, 154, 0.2);
     color: var(--text-soft);
     text-align: center;
 }
