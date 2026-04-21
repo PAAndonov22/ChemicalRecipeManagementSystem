@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | CRMS</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="brand-mark">CRMS Control</div>
+        <h1>Secure Recipe Access</h1>
+        <p class="lede">Authenticate into the chemical recipe control environment and continue with tracked work.</p>
+        <div id="status" class="status"></div>
+        <form id="login-form" class="form-grid">
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" type="email" required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" type="password" required>
+            </div>
+            <button class="button" type="submit">Sign In</button>
+        </form>
+        <div class="helper-link">Need an account? <a href="/register.html">Register here</a></div>
+    </div>
+    <script type="module" src="/assets/js/pages/login.js"></script>
+</body>
+</html>
