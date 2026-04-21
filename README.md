@@ -123,6 +123,7 @@ The app auto-creates demo data on first startup:
 - `admin@crms.local` / `Admin123!`
 - `chemist@crms.local` / `Chemist123!`
 - `technician@crms.local` / `Tech123!`
+- `user@crms.local` / `User123!`
 
 ## API documentation
 
