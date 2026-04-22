@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/assets/js/theme-init.js"></script>
+    <title>Admin Users | CRMS</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside id="sidebar" class="sidebar"></aside>
+        <div class="content-shell">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1 id="page-title"></h1>
+                    <p id="page-subtitle"></p>
+                </div>
+                <div id="user-chip" class="user-chip"></div>
+            </header>
+            <main class="page-grid">
+                <section class="card">
+                    <div class="section-title" style="margin-bottom: 12px;">Administrative User Management</div>
+                    <div class="subtle">Review role assignments, lockout state, active sessions, and emergency password resets.</div>
+                </section>
+                <section id="admin-users-status" class="status"></section>
+                <section id="admin-users-list" class="admin-user-grid"></section>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="/assets/js/pages/admin-users.js"></script>
+</body>
+</html>
