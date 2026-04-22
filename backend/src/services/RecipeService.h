@@ -26,8 +26,9 @@ public:
 private:
     RecipeMutationInput parseRecipeMutation(const json& payload) const;
     json recipeSummaryToJson(const RecipeSummary& recipe) const;
-    json versionToJson(const RecipeVersionView& version) const;
-    json recipeDetailToJson(const RecipeDetail& detail) const;
+    json versionToJson(const RecipeVersionView& version, bool includePreparationDetails) const;
+    json recipeDetailToJson(const RecipeDetail& detail, bool includePreparationDetails) const;
+    bool shouldHidePreparationDetails(const AuthenticatedUser& actor) const;
 
     RecipeRepository& repository_;
     AuthRepository& authRepository_;
