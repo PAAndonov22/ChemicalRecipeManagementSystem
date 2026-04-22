@@ -98,7 +98,13 @@ if (user) {
                 </div>
             `;
 
-            approvalPanel.innerHTML = `
+            approvalPanel.innerHTML = isReadOnlyViewer ? `
+                <div class="card approval-panel">
+                    <div class="section-title">Reference Access</div>
+                    <div class="subtle">This role is limited to viewing approved medicine descriptions and ingredient compositions.</div>
+                    <div><strong>Current State:</strong> ${item.approvalState.replaceAll("_", " ")}</div>
+                </div>
+            ` : `
                 <div class="card approval-panel">
                     <div class="section-title">Approval Workflow</div>
                     <div class="subtle">${workflowHint}</div>
