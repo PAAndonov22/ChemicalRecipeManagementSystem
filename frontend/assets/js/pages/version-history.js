@@ -1,5 +1,5 @@
 import { apiRequest } from "../services/api.js";
-import { mountAppLayout, renderEmptyState } from "../components/layout.js";
+import { mountAppLayout, renderEmptyState, setStatus } from "../components/layout.js";
 import { requireSession } from "../services/session.js";
 
 const user = await requireSession();
@@ -8,20 +8,119 @@ if (user) {
         user,
         activePage: "recipes",
         title: "Version History",
-        subtitle: "Inspect every stored recipe revision with its full ingredient snapshot."
+        subtitle: "Inspect every stored revision and compare two snapshots side by side."
     });
 
     const recipeId = new URLSearchParams(window.location.search).get("id");
     const historyContainer = document.getElementById("history");
+    const compareForm = document.getElementById("compare-form");
+    const compareStatus = document.getElementById("compare-status");
+    const comparisonResults = document.getElementById("comparison-results");
+    const leftVersionField = document.getElementById("leftVersion");
+    const rightVersionField = document.getElementById("rightVersion");
 
     if (!recipeId) {
         renderEmptyState(historyContainer, "A recipe id is required to load version history.");
     } else {
         const response = await apiRequest(`/recipes/${recipeId}/versions`);
-        if (!response.items.length) {
+        const versions = response.items;
+
+        if (!versions.length) {
             renderEmptyState(historyContainer, "No versions were found for this recipe.");
         } else {
-            historyContainer.innerHTML = response.items
+            const options = versions
+                .map((version) => `<option value="${version.versionNumber}">Version ${version.versionNumber} &middot; ${version.title}</option>`)
+                .join("");
+
+            leftVersionField.innerHTML = options;
+            rightVersionField.innerHTML = options;
+            leftVersionField.value = String(versions[versions.length - 1]?.versionNumber || versions[0].versionNumber);
+            rightVersionField.value = String(versions[0].versionNumber);
+
+            async function loadComparison() {
+                setStatus(compareStatus, "Loading comparison...", "info");
+
+                try {
+                    const query = new URLSearchParams({
+                        leftVersion: leftVersionField.value,
+                        rightVersion: rightVersionField.value
+                    });
+                    const comparison = await apiRequest(`/recipes/${recipeId}/compare?${query.toString()}`);
+                    const changedFieldCount = comparison.fieldDiffs.filter((item) => item.changed).length;
+                    const changedIngredientCount = comparison.ingredientDiffs.filter((item) => item.changeType !== "unchanged").length;
+
+                    comparisonResults.innerHTML = `
+                        <div class="split-grid">
+                            <div class="panel">
+                                <div class="subtle">Left Snapshot</div>
+                                <h3>Version ${comparison.leftVersion.versionNumber}</h3>
+                                <div>${comparison.leftVersion.title}</div>
+                            </div>
+                            <div class="panel">
+                                <div class="subtle">Right Snapshot</div>
+                                <h3>Version ${comparison.rightVersion.versionNumber}</h3>
+                                <div>${comparison.rightVersion.title}</div>
+                            </div>
+                        </div>
+                        <div class="split-grid" style="margin-top: 18px;">
+                            <div class="panel">
+                                <div class="subtle">Changed Fields</div>
+                                <div class="metric-value">${changedFieldCount}</div>
+                            </div>
+                            <div class="panel">
+                                <div class="subtle">Changed Ingredients</div>
+                                <div class="metric-value">${changedIngredientCount}</div>
+                            </div>
+                        </div>
+                        <div class="comparison-grid" style="margin-top: 18px;">
+                            ${comparison.fieldDiffs.map((field) => `
+                                <div class="diff-card ${field.changed ? "modified" : "unchanged"}">
+                                    <div class="recipe-meta">
+                                        <span class="tag ${field.changed ? "pending" : ""}">${field.field}</span>
+                                    </div>
+                                    <div class="diff-values">
+                                        <div><strong>Left:</strong><br>${field.left || "-"}</div>
+                                        <div><strong>Right:</strong><br>${field.right || "-"}</div>
+                                    </div>
+                                </div>
+                            `).join("")}
+                        </div>
+                        <div class="comparison-list" style="margin-top: 18px;">
+                            ${comparison.ingredientDiffs.map((ingredient) => `
+                                <div class="diff-card ${ingredient.changeType}">
+                                    <div class="recipe-meta">
+                                        <span class="tag ${ingredient.changeType === "added" ? "success" : ingredient.changeType === "removed" ? "danger" : ingredient.changeType === "modified" ? "pending" : ""}">${ingredient.changeType}</span>
+                                        <span class="subtle">Step ${ingredient.stepOrder}</span>
+                                    </div>
+                                    <h3 style="margin-bottom: 8px;">${ingredient.name}</h3>
+                                    <div class="diff-values">
+                                        <div><strong>Left:</strong> ${ingredient.leftQuantity ?? "-"} ${ingredient.unit}<br><span class="subtle">${ingredient.leftNotes || ""}</span></div>
+                                        <div><strong>Right:</strong> ${ingredient.rightQuantity ?? "-"} ${ingredient.unit}<br><span class="subtle">${ingredient.rightNotes || ""}</span></div>
+                                    </div>
+                                </div>
+                            `).join("")}
+                        </div>
+                    `;
+
+                    setStatus(compareStatus, "Comparison loaded.", "success");
+                } catch (error) {
+                    setStatus(compareStatus, error.message, "error");
+                }
+            }
+
+            compareForm?.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                await loadComparison();
+            });
+
+            if (versions.length < 2) {
+                compareForm.style.display = "none";
+                comparisonResults.innerHTML = `<div class="empty-state">Save another revision to unlock side-by-side comparison.</div>`;
+            } else {
+                await loadComparison();
+            }
+
+            historyContainer.innerHTML = versions
                 .map((version) => `
                     <div class="card history-card">
                         <div class="recipe-meta">
