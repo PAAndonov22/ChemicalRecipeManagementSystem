@@ -57,6 +57,10 @@ RecipeMutationInput RecipeService::parseRecipeMutation(const json& payload) cons
     return input;
 }
 
+bool RecipeService::shouldHidePreparationDetails(const AuthenticatedUser& actor) const {
+    return actor.roleName == "Technician";
+}
+
 json RecipeService::recipeSummaryToJson(const RecipeSummary& recipe) const {
     return {
         {"id", recipe.id},
