@@ -96,6 +96,17 @@ inline std::string optionalString(const json& payload, const std::string& field,
     return value;
 }
 
+inline bool optionalBool(const json& payload, const std::string& field, bool fallback = false) {
+    if (!payload.contains(field) || payload.at(field).is_null()) {
+        return fallback;
+    }
+
+    if (!payload.at(field).is_boolean()) {
+        throw HttpException(400, "Field '" + field + "' must be true or false.");
+    }
+    return payload.at(field).get<bool>();
+}
+
 inline int optionalIntQuery(const httplib::Request& request, const std::string& key, int fallback) {
     if (!request.has_param(key)) {
         return fallback;
