@@ -61,6 +61,15 @@ if (user) {
                 approvalMeta.push(`<div><strong>Reviewer Comment:</strong> ${item.reviewerComment}</div>`);
             }
 
+            let workflowHint = "Submit drafts for approval when they are ready for controlled release.";
+            if (item.approvalState === "pending_approval") {
+                workflowHint = "This recipe is waiting for an administrator to review and decide on the latest draft.";
+            } else if (item.approvalState === "rejected") {
+                workflowHint = "Update the draft to address reviewer feedback, then resubmit it for approval.";
+            } else if (item.approvalState === "approved") {
+                workflowHint = "Approved recipes remain visible to technician roles until a new draft revision is saved.";
+            }
+
             summary.innerHTML = `
                 <div class="panel">
                     <div class="recipe-meta">
@@ -89,6 +98,7 @@ if (user) {
             approvalPanel.innerHTML = `
                 <div class="card approval-panel">
                     <div class="section-title">Approval Workflow</div>
+                    <div class="subtle">${workflowHint}</div>
                     <div class="status-stack">
                         <div><strong>Current State:</strong> ${item.approvalState.replaceAll("_", " ")}</div>
                         ${approvalMeta.length ? approvalMeta.join("") : `<div class="subtle">No approval activity has been recorded yet.</div>`}

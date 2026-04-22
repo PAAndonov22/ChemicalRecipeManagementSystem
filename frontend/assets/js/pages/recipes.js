@@ -32,7 +32,19 @@ if (user) {
             return;
         }
 
+        const approvedCount = response.items.filter((item) => item.approvalState === "approved").length;
+        const pendingCount = response.items.filter((item) => item.approvalState === "pending_approval").length;
+        const rejectedCount = response.items.filter((item) => item.approvalState === "rejected").length;
+
         listContainer.innerHTML = `
+            <div class="toolbar" style="margin-bottom: 16px;">
+                <div class="subtle">Showing ${response.items.length} recipes</div>
+                <div class="recipe-meta">
+                    <span class="tag success">Approved ${approvedCount}</span>
+                    <span class="tag pending">Pending ${pendingCount}</span>
+                    <span class="tag danger">Rejected ${rejectedCount}</span>
+                </div>
+            </div>
             <div class="table-wrap">
                 <table>
                     <thead>
