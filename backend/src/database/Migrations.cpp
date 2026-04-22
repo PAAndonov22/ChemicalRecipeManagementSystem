@@ -4,8 +4,25 @@
 #include "../security/PasswordHasher.h"
 
 #include <optional>
+#include <vector>
 
 namespace {
+bool tableHasColumn(Database& database, const std::string& tableName, const std::string& columnName) {
+    Statement statement(database.connection(), ("PRAGMA table_info(" + tableName + ");").c_str());
+    while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+        if (columnText(statement.get(), 1) == columnName) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void ensureColumnExists(Database& database, const std::string& tableName, const std::string& columnName, const std::string& definition) {
+    if (!tableHasColumn(database, tableName, columnName)) {
+        database.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition + ";");
+    }
+}
+
 void insertRoleIfMissing(Database& database, const std::string& name, const std::string& description) {
     Statement statement(database.connection(), "INSERT OR IGNORE INTO roles (name, description) VALUES (?, ?);");
     sqlite3_bind_text(statement.get(), 1, name.c_str(), -1, SQLITE_TRANSIENT);
@@ -114,6 +131,29 @@ void deleteUserById(Database& database, int userId) {
     Statement statement(database.connection(), "DELETE FROM users WHERE id = ?;");
     sqlite3_bind_int(statement.get(), 1, userId);
     ensureSqliteResult(sqlite3_step(statement.get()), database.connection(), "Failed to delete legacy seeded user");
+}
+
+void cleanupUnexpectedDemoUsers(Database& database, int fallbackUserId, const std::vector<int>& preservedUserIds) {
+    Statement statement(database.connection(), R"sql(
+        SELECT id
+        FROM users
+        WHERE lower(email) LIKE '%@crms.local'
+          AND id NOT IN (?, ?, ?, ?);
+    )sql");
+    sqlite3_bind_int(statement.get(), 1, preservedUserIds.at(0));
+    sqlite3_bind_int(statement.get(), 2, preservedUserIds.at(1));
+    sqlite3_bind_int(statement.get(), 3, preservedUserIds.at(2));
+    sqlite3_bind_int(statement.get(), 4, preservedUserIds.at(3));
+
+    std::vector<int> extraUserIds;
+    while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+        extraUserIds.push_back(sqlite3_column_int(statement.get(), 0));
+    }
+
+    for (const int userId : extraUserIds) {
+        reassignUserReferences(database, userId, fallbackUserId);
+        deleteUserById(database, userId);
+    }
 }
 
 int ensureStandardUserSeed(Database& database, const PasswordHasher& passwordHasher, int technicianRoleId) {
@@ -308,15 +348,48 @@ void ensureSeedAudit(Database& database, int userId, int recipeId, const std::st
     ensureSqliteResult(sqlite3_step(statement.get()), database.connection(), "Failed to seed audit log");
 }
 
-void setRecipeCurrentVersion(Database& database, int recipeId, int currentVersionId, const std::string& status) {
+void setRecipeWorkflowState(
+    Database& database,
+    int recipeId,
+    int currentVersionId,
+    const std::string& status,
+    const std::string& approvalState,
+    const std::optional<int>& submittedBy = std::nullopt,
+    const std::optional<int>& reviewedBy = std::nullopt,
+    const std::string& reviewerComment = ""
+) {
     Statement statement(database.connection(), R"sql(
         UPDATE recipes
-        SET current_version_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        SET current_version_id = ?,
+            status = ?,
+            approval_state = ?,
+            submitted_at = CASE WHEN ? IS NULL THEN '' ELSE CURRENT_TIMESTAMP END,
+            submitted_by = ?,
+            reviewed_at = CASE WHEN ? IS NULL THEN '' ELSE CURRENT_TIMESTAMP END,
+            reviewed_by = ?,
+            reviewer_comment = ?,
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = ?;
     )sql");
     sqlite3_bind_int(statement.get(), 1, currentVersionId);
     sqlite3_bind_text(statement.get(), 2, status.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement.get(), 3, recipeId);
+    sqlite3_bind_text(statement.get(), 3, approvalState.c_str(), -1, SQLITE_TRANSIENT);
+    if (submittedBy.has_value()) {
+        sqlite3_bind_int(statement.get(), 4, submittedBy.value());
+        sqlite3_bind_int(statement.get(), 5, submittedBy.value());
+    } else {
+        sqlite3_bind_null(statement.get(), 4);
+        sqlite3_bind_null(statement.get(), 5);
+    }
+    if (reviewedBy.has_value()) {
+        sqlite3_bind_int(statement.get(), 6, reviewedBy.value());
+        sqlite3_bind_int(statement.get(), 7, reviewedBy.value());
+    } else {
+        sqlite3_bind_null(statement.get(), 6);
+        sqlite3_bind_null(statement.get(), 7);
+    }
+    sqlite3_bind_text(statement.get(), 8, reviewerComment.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 9, recipeId);
     ensureSqliteResult(sqlite3_step(statement.get()), database.connection(), "Failed to set current seeded version");
 }
 
@@ -384,7 +457,7 @@ void seedDemoRecipes(Database& database, int adminId, int chemistId, int technic
         ensureRecipeIngredient(database, bufferV3, waterId, 13.0, "L", 1, "Final validated batch size");
         ensureRecipeIngredient(database, bufferV3, saltId, 1.1, "kg", 2, "Conductivity trimmed to target");
         ensureRecipeIngredient(database, bufferV3, acidId, 0.3, "kg", 3, "Final release specification");
-        setRecipeCurrentVersion(database, bufferRecipeId, bufferV3, "approved");
+        setRecipeWorkflowState(database, bufferRecipeId, bufferV3, "approved", "approved", chemistId, adminId, "Approved seeded release for technician visibility.");
         ensureRecipeShare(database, bufferRecipeId, technicianId, adminId, "read");
         ensureRecipeShare(database, bufferRecipeId, userId, adminId, "read");
         ensureSeedAudit(database, adminId, bufferRecipeId, "Seeded neutral buffer recipe with three versions and technician team access.");
@@ -428,7 +501,7 @@ void seedDemoRecipes(Database& database, int adminId, int chemistId, int technic
         ensureRecipeIngredient(database, cleanerV2, ethanolId, 3.7, "L", 2, "Maintain drying rate");
         ensureRecipeIngredient(database, cleanerV2, surfactantId, 0.3, "kg", 3, "Reduced residue");
         ensureRecipeIngredient(database, cleanerV2, peroxideId, 0.28, "L", 4, "Reduced oxidizer load");
-        setRecipeCurrentVersion(database, cleanerRecipeId, cleanerV2, "draft");
+        setRecipeWorkflowState(database, cleanerRecipeId, cleanerV2, "draft", "pending_approval", chemistId);
         ensureRecipeShare(database, cleanerRecipeId, technicianId, chemistId, "read");
         ensureRecipeShare(database, cleanerRecipeId, userId, chemistId, "edit");
         ensureSeedAudit(database, adminId, cleanerRecipeId, "Seeded surface cleaner recipe with two versions and mixed technician access.");
@@ -470,11 +543,151 @@ void seedDemoRecipes(Database& database, int adminId, int chemistId, int technic
         ensureRecipeIngredient(database, inhibitorV2, glycolId, 5.4, "L", 1, "Improved viscosity and carry");
         ensureRecipeIngredient(database, inhibitorV2, waterId, 8.7, "L", 2, "Adjusted dilution");
         ensureRecipeIngredient(database, inhibitorV2, benzotriazoleId, 0.8, "kg", 3, "Higher protection threshold");
-        setRecipeCurrentVersion(database, inhibitorRecipeId, inhibitorV2, "approved");
+        setRecipeWorkflowState(database, inhibitorRecipeId, inhibitorV2, "approved", "approved", adminId, adminId, "Approved seeded inhibitor release.");
         ensureRecipeShare(database, inhibitorRecipeId, chemistId, adminId, "edit");
         ensureRecipeShare(database, inhibitorRecipeId, technicianId, adminId, "read");
         ensureRecipeShare(database, inhibitorRecipeId, userId, adminId, "read");
         ensureSeedAudit(database, adminId, inhibitorRecipeId, "Seeded corrosion inhibitor recipe with multi-role sharing.");
+
+        const int bicarbonateId = upsertIngredient(database, "Sodium Bicarbonate", "144-55-8", "kg", "Neutralizing buffer");
+        const int glycerinId = upsertIngredient(database, "Glycerin", "56-81-5", "L", "Humectant and stabilizer");
+        const int edtaId = upsertIngredient(database, "EDTA Disodium Salt", "6381-92-6", "kg", "Chelating agent");
+        const int benzoateId = upsertIngredient(database, "Sodium Benzoate", "532-32-1", "kg", "Preservative");
+        const int ipaId = upsertIngredient(database, "Isopropyl Alcohol", "67-63-0", "L", "Fast-cleaning solvent");
+        const int lacticAcidId = upsertIngredient(database, "Lactic Acid", "50-21-5", "kg", "Acidification agent");
+        const int sorbateId = upsertIngredient(database, "Potassium Sorbate", "24634-61-5", "kg", "Stability additive");
+        const int defoamerId = upsertIngredient(database, "Silicone Defoamer", "63148-62-9", "kg", "Foam control");
+        const int ureaId = upsertIngredient(database, "Urea", "57-13-6", "kg", "Solubility support");
+        const int citrateId = upsertIngredient(database, "Sodium Citrate", "6132-04-3", "kg", "Buffering salt");
+
+        struct SeedTemplate {
+            std::string code;
+            std::string name;
+            std::string description;
+        };
+
+        const std::vector<SeedTemplate> extraRecipes = {
+            {"RX-4001", "Glassware Rinse Base", "Controlled rinse formulation for post-process vessel cleaning and residue removal."},
+            {"RX-4002", "CIP Booster Solution", "Boosted alkaline-assisted cleaning blend for closed-loop cleaning circuits."},
+            {"RX-4003", "Storage Tank Conditioner", "Conditioning blend used before extended storage and startup cycles."},
+            {"RX-4004", "Conductivity Calibration Mix", "Reference conductivity formulation used for lab verification routines."},
+            {"RX-4005", "Seal Flush Medium", "Low-residue seal flush recipe for rotating equipment protection."},
+            {"RX-4006", "Pipe Passivation Prep", "Pre-passivation wetting formula for stainless pipework treatment."},
+            {"RX-4007", "Cooling Loop Stabilizer", "Heat-transfer support blend for recirculating cooling loops."},
+            {"RX-4008", "Degreasing Prewash", "Prewash blend for oily residue removal before final sanitation."},
+            {"RX-4009", "Instrument Contact Cleaner", "Low-residue cleaner for external instrument contact surfaces."},
+            {"RX-4010", "Powder Dissolution Aid", "Supportive wetting and dissolution aid for small-batch solids charging."},
+            {"RX-4011", "Neutral Transfer Flush", "Transfer-line flush used between incompatible product families."},
+            {"RX-4012", "Reservoir Biostability Mix", "Preservative-assisted mix for covered reservoirs and staging tanks."},
+            {"RX-4013", "Foam-Control Wash", "Low-foam cleaning solution for enclosed spray applications."},
+            {"RX-4014", "Metal Surface Brightener", "Controlled acidic blend for light oxide removal on metal surfaces."},
+            {"RX-4015", "Viscosity Hold Blend", "Support recipe for temporary viscosity stabilization during trials."},
+            {"RX-4016", "Bench Sanitizer Concentrate", "Sanitizer concentrate used for controlled bench-top wipe downs."},
+            {"RX-4017", "Sample Line Conditioner", "Conditioning recipe for analytical sample lines and transfer loops."},
+            {"RX-4018", "Stainless Polish Carrier", "Carrier blend used with corrosion inhibitor traces for polish prep."},
+            {"RX-4019", "Residue Lift Additive", "Additive recipe for lifting sticky or sugary residues."},
+            {"RX-4020", "Closed Vessel Humectant", "Humidity-balancing liquid for sealed evaluation chambers."},
+            {"RX-4021", "pH Trim Concentrate", "Small-volume concentrate for controlled pH trimming operations."},
+            {"RX-4022", "Valve Seat Cleaner", "Localized cleaning blend for valve-seat residue and minor buildup."},
+            {"RX-4023", "Transfer Drum Guard", "Protective storage additive for intermediate transfer drums."},
+            {"RX-4024", "Post-Sterilization Rinse", "Final rinse solution after sterilization validation cycles."},
+            {"RX-4025", "Membrane Wetting Aid", "Wetting aid used before membrane filtration start-up."},
+            {"RX-4026", "Surface Neutralizer", "Neutralizing follow-up formula after acidic cleaning steps."},
+            {"RX-4027", "Sensor Housing Flush", "Flush recipe for protected sensor housings and probe jackets."},
+            {"RX-4028", "Loop Preservation Blend", "Preservation solution for idle recirculation lines."},
+            {"RX-4029", "Mild Oxidation Cleaner", "Moderate oxidation-assisted cleaning recipe for periodic use."},
+            {"RX-4030", "Process Hold Stabilizer", "Hold-state stabilizer for paused production batches."},
+            {"RX-4031", "Batch Release Conditioner", "Conditioner applied before final release checks on small systems."},
+            {"RX-4032", "Low-Residue Equipment Rinse", "Final-rinse formulation optimized for quick drying and low residue."}
+        };
+
+        const std::vector<int> ingredientPool = {
+            waterId, saltId, acidId, ethanolId, peroxideId, benzotriazoleId, glycolId, surfactantId,
+            bicarbonateId, glycerinId, edtaId, benzoateId, ipaId, lacticAcidId, sorbateId, defoamerId,
+            ureaId, citrateId
+        };
+
+        for (std::size_t index = 0; index < extraRecipes.size(); ++index) {
+            const auto& recipe = extraRecipes[index];
+            const bool archived = index % 11 == 0;
+            const bool pending = !archived && index % 5 == 0;
+            const bool rejected = !archived && !pending && index % 4 == 0;
+            const std::string finalStatus = archived ? "archived" : (pending || rejected ? "draft" : "approved");
+            const std::string finalApprovalState = archived ? "approved" : (pending ? "pending_approval" : (rejected ? "rejected" : "approved"));
+            const int ownerId = index % 2 == 0 ? chemistId : adminId;
+            const int recipeId = insertRecipeIfMissing(database, recipe.code, recipe.name, recipe.description, finalStatus, ownerId);
+
+            const int ingredientA = ingredientPool[index % ingredientPool.size()];
+            const int ingredientB = ingredientPool[(index + 3) % ingredientPool.size()];
+            const int ingredientC = ingredientPool[(index + 7) % ingredientPool.size()];
+            const int ingredientD = ingredientPool[(index + 11) % ingredientPool.size()];
+
+            const int version1 = insertRecipeVersionIfMissing(
+                database,
+                recipeId,
+                1,
+                recipe.name + " baseline",
+                "Baseline operational blend used for the initial controlled release.",
+                "1. Charge primary carrier. 2. Add support ingredients under moderate mixing. 3. Record clarity and hold for five minutes.",
+                "Use standard PPE and verify vessel cleanliness before charging.",
+                "Seeded baseline revision",
+                ownerId
+            );
+            ensureRecipeIngredient(database, version1, ingredientA, 4.0 + static_cast<double>(index % 5), "L", 1, "Primary carrier");
+            ensureRecipeIngredient(database, version1, ingredientB, 0.45 + static_cast<double>(index % 4) * 0.1, "kg", 2, "Functional additive");
+            ensureRecipeIngredient(database, version1, ingredientC, 0.25 + static_cast<double>(index % 3) * 0.08, "kg", 3, "Adjustment component");
+
+            const int version2 = insertRecipeVersionIfMissing(
+                database,
+                recipeId,
+                2,
+                recipe.name + " adjusted",
+                "Rebalanced follow-up revision with narrower operating tolerances and improved handling.",
+                "1. Pre-blend carrier and stabilizer. 2. Add active component slowly. 3. Mix for eight minutes. 4. Verify pH or clarity before release.",
+                "Confirm ventilation where volatile solvents are present and avoid incompatible oxidizers.",
+                "Adjusted additive balance and handling notes",
+                ownerId
+            );
+            ensureRecipeIngredient(database, version2, ingredientA, 4.4 + static_cast<double>(index % 5), "L", 1, "Adjusted carrier volume");
+            ensureRecipeIngredient(database, version2, ingredientB, 0.35 + static_cast<double>(index % 4) * 0.1, "kg", 2, "Reduced functional additive");
+            ensureRecipeIngredient(database, version2, ingredientD, 0.18 + static_cast<double>(index % 3) * 0.06, "kg", 3, "Secondary support ingredient");
+
+            int currentVersionId = version2;
+            if (index % 2 == 0) {
+                const int version3 = insertRecipeVersionIfMissing(
+                    database,
+                    recipeId,
+                    3,
+                    recipe.name + " release",
+                    "Release-ready revision with final notes for storage, transfer, and technician reference.",
+                    "1. Validate clean equipment. 2. Charge carrier. 3. Add solids and solvents in defined order. 4. Hold and release after final check.",
+                    "Use splash protection and document any odor, color, or foam deviation before use.",
+                    "Release candidate revision with technician guidance",
+                    adminId
+                );
+                ensureRecipeIngredient(database, version3, ingredientA, 4.7 + static_cast<double>(index % 5), "L", 1, "Release batch carrier");
+                ensureRecipeIngredient(database, version3, ingredientC, 0.28 + static_cast<double>(index % 4) * 0.07, "kg", 2, "Tuned support ingredient");
+                ensureRecipeIngredient(database, version3, ingredientD, 0.16 + static_cast<double>(index % 3) * 0.05, "kg", 3, "Final correction ingredient");
+                currentVersionId = version3;
+            }
+
+            if (finalApprovalState == "approved") {
+                setRecipeWorkflowState(database, recipeId, currentVersionId, finalStatus, finalApprovalState, ownerId, adminId, "Approved seeded workflow item.");
+            } else if (finalApprovalState == "pending_approval") {
+                setRecipeWorkflowState(database, recipeId, currentVersionId, finalStatus, finalApprovalState, ownerId);
+            } else if (finalApprovalState == "rejected") {
+                setRecipeWorkflowState(database, recipeId, currentVersionId, finalStatus, finalApprovalState, ownerId, adminId, "Seeded rejection example for review training.");
+            } else {
+                setRecipeWorkflowState(database, recipeId, currentVersionId, finalStatus, finalApprovalState);
+            }
+
+            ensureRecipeShare(database, recipeId, technicianId, ownerId, index % 3 == 0 ? "edit" : "read");
+            ensureRecipeShare(database, recipeId, userId, ownerId, index % 2 == 0 ? "read" : "edit");
+            if (index % 4 == 0) {
+                ensureRecipeShare(database, recipeId, chemistId, adminId, "edit");
+            }
+            ensureSeedAudit(database, ownerId, recipeId, "Seeded extended demo recipe " + recipe.code + " for larger practical assignment datasets.");
+        }
 
         database.commit();
     } catch (...) {
@@ -500,6 +713,8 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
             password_salt TEXT NOT NULL,
             role_id INTEGER NOT NULL REFERENCES roles(id),
             is_active INTEGER NOT NULL DEFAULT 1,
+            failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+            locked_until TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -510,8 +725,14 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
             name TEXT NOT NULL,
             description TEXT NOT NULL,
             status TEXT NOT NULL CHECK(status IN ('draft', 'approved', 'archived')),
+            approval_state TEXT NOT NULL DEFAULT 'draft' CHECK(approval_state IN ('draft', 'pending_approval', 'approved', 'rejected')),
             owner_id INTEGER NOT NULL REFERENCES users(id),
             current_version_id INTEGER,
+            submitted_at TEXT NOT NULL DEFAULT '',
+            submitted_by INTEGER REFERENCES users(id),
+            reviewed_at TEXT NOT NULL DEFAULT '',
+            reviewed_by INTEGER REFERENCES users(id),
+            reviewer_comment TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -575,6 +796,8 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             token_hash TEXT NOT NULL UNIQUE,
+            remember_me INTEGER NOT NULL DEFAULT 0,
+            session_label TEXT NOT NULL DEFAULT '',
             expires_at TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             last_used_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -585,7 +808,7 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
             theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark')),
             density TEXT NOT NULL DEFAULT 'comfortable' CHECK(density IN ('comfortable', 'compact')),
             default_recipe_status TEXT NOT NULL DEFAULT '' CHECK(default_recipe_status IN ('', 'draft', 'approved', 'archived')),
-            landing_page TEXT NOT NULL DEFAULT 'dashboard' CHECK(landing_page IN ('dashboard', 'recipes', 'reports', 'settings')),
+            landing_page TEXT NOT NULL DEFAULT 'dashboard' CHECK(landing_page IN ('dashboard', 'recipes', 'reports', 'settings', 'admin-users')),
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -595,6 +818,28 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
         CREATE INDEX IF NOT EXISTS idx_shared_recipes_user_id ON shared_recipes(shared_with_user_id);
         CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
         CREATE INDEX IF NOT EXISTS idx_user_sessions_token_hash ON user_sessions(token_hash);
+    )sql");
+
+    ensureColumnExists(database, "users", "failed_login_attempts", "INTEGER NOT NULL DEFAULT 0");
+    ensureColumnExists(database, "users", "locked_until", "TEXT NOT NULL DEFAULT ''");
+    ensureColumnExists(database, "recipes", "approval_state", "TEXT NOT NULL DEFAULT 'draft'");
+    ensureColumnExists(database, "recipes", "submitted_at", "TEXT NOT NULL DEFAULT ''");
+    ensureColumnExists(database, "recipes", "submitted_by", "INTEGER REFERENCES users(id)");
+    ensureColumnExists(database, "recipes", "reviewed_at", "TEXT NOT NULL DEFAULT ''");
+    ensureColumnExists(database, "recipes", "reviewed_by", "INTEGER REFERENCES users(id)");
+    ensureColumnExists(database, "recipes", "reviewer_comment", "TEXT NOT NULL DEFAULT ''");
+    ensureColumnExists(database, "user_sessions", "remember_me", "INTEGER NOT NULL DEFAULT 0");
+    ensureColumnExists(database, "user_sessions", "session_label", "TEXT NOT NULL DEFAULT ''");
+    database.execute("CREATE INDEX IF NOT EXISTS idx_recipes_approval_state ON recipes(approval_state);");
+
+    database.execute(R"sql(
+        UPDATE recipes
+        SET approval_state = CASE
+            WHEN status = 'approved' THEN 'approved'
+            WHEN status = 'archived' THEN 'approved'
+            ELSE approval_state
+        END
+        WHERE approval_state IS NULL OR approval_state = '' OR (status = 'approved' AND approval_state <> 'approved');
     )sql");
 
     insertRoleIfMissing(database, "Admin", "Full administrative access");
@@ -609,6 +854,7 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
     const int chemistId = insertUserIfMissing(database, passwordHasher, "chemist", "chemist@crms.local", "Chemist123!", chemistRoleId);
     const int technicianId = insertUserIfMissing(database, passwordHasher, "technician", "technician@crms.local", "Tech123!", technicianRoleId);
     const int userId = ensureStandardUserSeed(database, passwordHasher, technicianRoleId);
+    cleanupUnexpectedDemoUsers(database, userId, {adminId, chemistId, technicianId, userId});
 
     ensureUserPreferences(database, adminId);
     ensureUserPreferences(database, chemistId);
