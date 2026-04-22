@@ -90,8 +90,8 @@ if (user) {
                             ${isReadOnlyViewer ? `<div><strong>What It Contains:</strong> The ingredient list below shows the approved contents and quantities for this medicine.</div>` : `<div><strong>Instructions:</strong><br>${item.currentVersion.instructions}</div>`}
                         </div>
                         <div class="stack">
-                            <div><strong>Safety Notes:</strong><br>${item.currentVersion.safetyNotes}</div>
-                            <div><strong>Change Summary:</strong> ${item.currentVersion.changeSummary}</div>
+                            ${isReadOnlyViewer ? `<div><strong>Visible Scope:</strong> Your account can review the description and ingredients, but preparation steps are restricted.</div>` : `<div><strong>Safety Notes:</strong><br>${item.currentVersion.safetyNotes}</div>
+                            <div><strong>Change Summary:</strong> ${item.currentVersion.changeSummary}</div>`}
                             <div><strong>Version Created:</strong> ${item.currentVersion.createdAt} by ${item.currentVersion.createdByName}</div>
                         </div>
                     </div>
