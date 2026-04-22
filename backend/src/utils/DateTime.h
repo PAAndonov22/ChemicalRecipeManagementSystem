@@ -25,3 +25,7 @@ inline std::string currentUtcTimestamp() {
 inline std::string futureUtcTimestampHours(int hours) {
     return formatUtc(std::time(nullptr) + static_cast<std::time_t>(hours) * 60 * 60);
 }
+
+inline std::string futureUtcTimestampMinutes(int minutes) {
+    return formatUtc(std::time(nullptr) + static_cast<std::time_t>(minutes) * 60);
+}
