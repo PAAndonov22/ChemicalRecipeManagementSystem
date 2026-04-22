@@ -39,6 +39,7 @@ if (user) {
                         <tr>
                             <th>Recipe</th>
                             <th>Status</th>
+                            <th>Approval</th>
                             <th>Owner</th>
                             <th>Version</th>
                             <th>Updated</th>
@@ -54,11 +55,12 @@ if (user) {
                                     ${item.name}<br>
                                     <span class="subtle">${item.description}</span>
                                 </td>
-                                <td><span class="tag ${item.status === "archived" ? "danger" : item.status === "draft" ? "warn" : ""}">${item.status}</span></td>
+                                <td><span class="tag ${item.status === "archived" ? "danger" : item.status === "draft" ? "warn" : "success"}">${item.status}</span></td>
+                                <td><span class="tag ${item.approvalState === "pending_approval" ? "pending" : item.approvalState === "approved" ? "success" : item.approvalState === "rejected" ? "danger" : "warn"}">${item.approvalState.replaceAll("_", " ")}</span></td>
                                 <td>${item.ownerName}</td>
                                 <td>v${item.currentVersionNumber}</td>
                                 <td>${item.updatedAt}</td>
-                                <td>${item.canEdit ? "Edit" : "Read"}${item.sharedWithUser ? " · Shared" : ""}</td>
+                                <td>${item.canEdit ? "Edit" : "Read"}${item.sharedWithUser ? " &middot; Shared" : ""}</td>
                                 <td><a class="button-secondary" href="/recipe-details.html?id=${item.id}">Open</a></td>
                             </tr>
                         `).join("")}
