@@ -48,7 +48,7 @@ if (user) {
             document.getElementById("code").value = item.code;
             document.getElementById("name").value = item.name;
             document.getElementById("description").value = item.description;
-            document.getElementById("status").value = item.status;
+            document.getElementById("status").value = item.status === "archived" ? "archived" : "draft";
             document.getElementById("title").value = item.currentVersion.title;
             document.getElementById("summary").value = item.currentVersion.summary;
             document.getElementById("instructions").value = item.currentVersion.instructions;
