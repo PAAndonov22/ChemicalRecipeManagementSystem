@@ -21,6 +21,7 @@ if (user) {
     const comparisonResults = document.getElementById("comparison-results");
     const leftVersionField = document.getElementById("leftVersion");
     const rightVersionField = document.getElementById("rightVersion");
+    const compareSection = document.getElementById("compare");
 
     if (!recipeId) {
         renderEmptyState(historyContainer, "A recipe id is required to load version history.");
@@ -116,7 +117,9 @@ if (user) {
                 await loadComparison();
             });
 
-            if (versions.length < 2) {
+            if (isReadOnlyViewer) {
+                compareSection.style.display = "none";
+            } else if (versions.length < 2) {
                 compareForm.style.display = "none";
                 comparisonResults.innerHTML = `<div class="empty-state">Save another revision to unlock side-by-side comparison.</div>`;
             } else {
