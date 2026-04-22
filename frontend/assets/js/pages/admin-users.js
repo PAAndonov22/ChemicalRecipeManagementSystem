@@ -76,6 +76,9 @@ if (currentUser) {
             form.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 const userId = form.dataset.updateForm;
+                if (!window.confirm("Save the updated role and account status for this user?")) {
+                    return;
+                }
                 setStatus(statusBox, "Updating user account...", "info");
                 try {
                     const response = await apiRequest(`/admin/users/${userId}`, {
@@ -98,6 +101,9 @@ if (currentUser) {
                 event.preventDefault();
                 const userId = form.dataset.resetForm;
                 const passwordInput = document.getElementById(`password-${userId}`);
+                if (!window.confirm("Reset this user password and revoke their existing sessions?")) {
+                    return;
+                }
                 setStatus(statusBox, "Resetting password...", "info");
                 try {
                     const response = await apiRequest(`/admin/users/${userId}/reset-password`, {
