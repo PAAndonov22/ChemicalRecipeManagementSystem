@@ -173,6 +173,10 @@ json RecipeService::getVersions(int recipeId, const AuthenticatedUser& actor) co
 }
 
 json RecipeService::compareVersions(int recipeId, const AuthenticatedUser& actor, const httplib::Request& request) const {
+    if (shouldHidePreparationDetails(actor)) {
+        throw HttpException(403, "Comparison is only available to recipe editors and reviewers.");
+    }
+
     const int leftVersionNumber = optionalIntQuery(request, "leftVersion", 0);
     const int rightVersionNumber = optionalIntQuery(request, "rightVersion", 0);
     if (leftVersionNumber <= 0 || rightVersionNumber <= 0) {
