@@ -16,9 +16,12 @@ public:
     json listRecipes(const AuthenticatedUser& actor, const httplib::Request& request) const;
     json getRecipe(int recipeId, const AuthenticatedUser& actor) const;
     json getVersions(int recipeId, const AuthenticatedUser& actor) const;
+    json compareVersions(int recipeId, const AuthenticatedUser& actor, const httplib::Request& request) const;
     json createRecipe(const AuthenticatedUser& actor, const json& payload, const std::string& ipAddress) const;
     json updateRecipe(int recipeId, const AuthenticatedUser& actor, const json& payload, const std::string& ipAddress) const;
     json shareRecipe(int recipeId, const AuthenticatedUser& actor, const json& payload, const std::string& ipAddress) const;
+    json submitForApproval(int recipeId, const AuthenticatedUser& actor, const std::string& ipAddress) const;
+    json reviewRecipe(int recipeId, const AuthenticatedUser& actor, const json& payload, const std::string& ipAddress) const;
 
 private:
     RecipeMutationInput parseRecipeMutation(const json& payload) const;
