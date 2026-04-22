@@ -15,7 +15,8 @@ form?.addEventListener("submit", async (event) => {
 
     const payload = {
         identifier: document.getElementById("identifier").value,
-        password: document.getElementById("password").value
+        password: document.getElementById("password").value,
+        rememberMe: document.getElementById("rememberMe").checked
     };
 
     try {
