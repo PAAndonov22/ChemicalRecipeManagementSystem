@@ -48,6 +48,10 @@
                         <div class="field">
                             <label for="newPassword">New Password</label>
                             <input id="newPassword" type="password" required>
+                            <div class="password-strength">
+                                <div class="password-strength-bar"><div id="password-strength-fill" class="password-strength-fill"></div></div>
+                                <div id="password-strength-label" class="password-strength-label">Enter a password</div>
+                            </div>
                         </div>
                         <div class="field">
                             <label for="confirmPassword">Confirm New Password</label>
@@ -94,6 +98,12 @@
                             <button class="button" type="submit">Save Settings</button>
                         </div>
                     </form>
+                </section>
+
+                <section class="card">
+                    <div class="section-title" style="margin-bottom: 14px;">Active Sessions</div>
+                    <div id="sessions-status" class="status"></div>
+                    <div id="sessions-list" class="session-list"></div>
                 </section>
             </main>
         </div>
