@@ -34,3 +34,12 @@ export function bindPasswordStrength(input, fillElement, labelElement) {
     input.addEventListener("input", render);
     render();
 }
+
+export function resetPasswordStrength(fillElement, labelElement) {
+    if (!fillElement || !labelElement) {
+        return;
+    }
+
+    fillElement.style.width = "0";
+    labelElement.textContent = "Enter a password";
+}

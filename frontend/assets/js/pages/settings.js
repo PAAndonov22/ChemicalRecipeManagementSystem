@@ -1,6 +1,6 @@
 import { apiRequest, setStoredUser } from "../services/api.js";
 import { mountAppLayout, renderEmptyState, setStatus } from "../components/layout.js";
-import { bindPasswordStrength } from "../components/password-strength.js";
+import { bindPasswordStrength, resetPasswordStrength } from "../components/password-strength.js";
 import { applyAppearance, getAvailableLandingPages } from "../services/preferences.js";
 import { requireSession } from "../services/session.js";
 
@@ -141,8 +141,7 @@ if (currentUser) {
                 }
             });
             passwordForm.reset();
-            bindPasswordStrength(
-                document.getElementById("newPassword"),
+            resetPasswordStrength(
                 document.getElementById("password-strength-fill"),
                 document.getElementById("password-strength-label")
             );
