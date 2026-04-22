@@ -1,5 +1,6 @@
 import { apiRequest } from "../services/api.js";
 import { mountAppLayout, renderEmptyState } from "../components/layout.js";
+import { getUserPreferences } from "../services/preferences.js";
 import { requireSession } from "../services/session.js";
 
 const user = await requireSession();
@@ -13,6 +14,11 @@ if (user) {
 
     const form = document.getElementById("filter-form");
     const listContainer = document.getElementById("recipe-list");
+    const preferences = getUserPreferences(user);
+
+    if (preferences.defaultRecipeStatus) {
+        document.getElementById("statusFilter").value = preferences.defaultRecipeStatus;
+    }
 
     async function loadRecipes() {
         const query = new URLSearchParams({

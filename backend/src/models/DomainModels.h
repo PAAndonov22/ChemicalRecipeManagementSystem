@@ -4,12 +4,20 @@
 #include <string>
 #include <vector>
 
+struct UserPreferences {
+    std::string theme{"light"};
+    std::string density{"comfortable"};
+    std::string defaultRecipeStatus{""};
+    std::string landingPage{"dashboard"};
+};
+
 struct AuthenticatedUser {
     int id{};
     std::string username;
     std::string email;
     std::string roleName;
     bool isActive{true};
+    UserPreferences preferences;
 };
 
 struct UserLoginRecord {
@@ -20,6 +28,7 @@ struct UserLoginRecord {
     std::string passwordHash;
     std::string passwordSalt;
     bool isActive{true};
+    UserPreferences preferences;
 };
 
 struct SessionRecord {
@@ -30,6 +39,7 @@ struct SessionRecord {
     std::string roleName;
     bool isActive{true};
     std::string expiresAt;
+    UserPreferences preferences;
 };
 
 struct IngredientInput {

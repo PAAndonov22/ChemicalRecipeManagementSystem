@@ -13,9 +13,11 @@ A full-stack chemical recipe management platform built with a C++ REST API, SQLi
 ## Implemented capabilities
 
 - User registration and login
+- Username or email login
 - Password hashing with PBKDF2-HMAC-SHA256
 - Session-token authentication
 - Role-based access control for `Admin`, `Chemist`, and `Technician`
+- Account settings for username, email, password, theme, density, landing page, and default recipe filter
 - Recipe creation and editing with immutable version snapshots
 - Ingredient normalization through reusable ingredient records
 - Recipe sharing with `read` or `edit` permission
@@ -72,6 +74,7 @@ The application uses SQLite only.
 - `audit_logs`: immutable operational trail for security-sensitive actions.
 - `shared_recipes`: explicit recipe-sharing records by user and permission level.
 - `user_sessions`: hashed bearer-token sessions for authentication.
+- `user_preferences`: persisted UI and workflow settings per user.
 
 ### ER diagram description in text
 
@@ -83,6 +86,7 @@ The application uses SQLite only.
 - One `recipe` can be shared with many `users` through `shared_recipes`.
 - One `user` can create many `audit_logs`.
 - One `user` can hold many `user_sessions`.
+- One `user` has one `user_preferences` record.
 
 ## Setup instructions
 
@@ -132,12 +136,24 @@ The app auto-creates demo data on first startup:
 - `POST /api/auth/register`
   - body: `username`, `email`, `password`, `roleName`
 - `POST /api/auth/login`
-  - body: `email`, `password`
+  - body: `identifier`, `password`
+  - `identifier` accepts either username or email
   - returns bearer token and user profile
 - `POST /api/auth/logout`
   - requires `Authorization: Bearer <token>`
 - `GET /api/auth/me`
   - returns current authenticated user
+- `PUT /api/account/profile`
+  - requires `Authorization: Bearer <token>`
+  - body: `username`, `email`
+- `PUT /api/account/password`
+  - requires `Authorization: Bearer <token>`
+  - body: `currentPassword`, `newPassword`
+- `GET /api/account/settings`
+  - requires `Authorization: Bearer <token>`
+- `PUT /api/account/settings`
+  - requires `Authorization: Bearer <token>`
+  - body: `theme`, `density`, `landingPage`, `defaultRecipeStatus`
 
 ### Users
 
@@ -208,6 +224,7 @@ The script verifies:
 - [`version-history.html`](frontend/version-history.html)
 - [`audit-logs.html`](frontend/audit-logs.html)
 - [`reports.html`](frontend/reports.html)
+- [`settings.html`](frontend/settings.html)
 
 ## Notes
 

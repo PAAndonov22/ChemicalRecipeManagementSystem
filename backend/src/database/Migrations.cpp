@@ -82,6 +82,16 @@ void updateSeedUserAccount(Database& database, const PasswordHasher& passwordHas
     ensureSqliteResult(sqlite3_step(statement.get()), database.connection(), "Failed to update seeded user");
 }
 
+void ensureUserPreferences(Database& database, int userId) {
+    Statement statement(database.connection(), R"sql(
+        INSERT INTO user_preferences (user_id, theme, density, default_recipe_status, landing_page, updated_at)
+        VALUES (?, 'light', 'comfortable', '', 'dashboard', CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO NOTHING;
+    )sql");
+    sqlite3_bind_int(statement.get(), 1, userId);
+    ensureSqliteResult(sqlite3_step(statement.get()), database.connection(), "Failed to seed user preferences");
+}
+
 void reassignUserReferences(Database& database, int fromUserId, int toUserId) {
     const char* statements[] = {
         "UPDATE recipes SET owner_id = ? WHERE owner_id = ?;",
@@ -570,6 +580,15 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
             last_used_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark')),
+            density TEXT NOT NULL DEFAULT 'comfortable' CHECK(density IN ('comfortable', 'compact')),
+            default_recipe_status TEXT NOT NULL DEFAULT '' CHECK(default_recipe_status IN ('', 'draft', 'approved', 'archived')),
+            landing_page TEXT NOT NULL DEFAULT 'dashboard' CHECK(landing_page IN ('dashboard', 'recipes', 'reports', 'settings')),
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE INDEX IF NOT EXISTS idx_recipes_owner_id ON recipes(owner_id);
         CREATE INDEX IF NOT EXISTS idx_recipe_versions_recipe_id ON recipe_versions(recipe_id);
         CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_version_id ON recipe_ingredients(recipe_version_id);
@@ -590,6 +609,11 @@ void migrations::apply(Database& database, const PasswordHasher& passwordHasher)
     const int chemistId = insertUserIfMissing(database, passwordHasher, "chemist", "chemist@crms.local", "Chemist123!", chemistRoleId);
     const int technicianId = insertUserIfMissing(database, passwordHasher, "technician", "technician@crms.local", "Tech123!", technicianRoleId);
     const int userId = ensureStandardUserSeed(database, passwordHasher, technicianRoleId);
+
+    ensureUserPreferences(database, adminId);
+    ensureUserPreferences(database, chemistId);
+    ensureUserPreferences(database, technicianId);
+    ensureUserPreferences(database, userId);
 
     seedDemoRecipes(database, adminId, chemistId, technicianId, userId);
 }

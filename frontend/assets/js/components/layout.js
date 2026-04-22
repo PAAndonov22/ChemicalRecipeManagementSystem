@@ -6,7 +6,8 @@ const navItems = [
     { key: "recipes", label: "Recipe List", href: "/recipes.html", roles: ["Admin", "Chemist", "Technician"] },
     { key: "editor", label: "Create Recipe", href: "/recipe-editor.html", roles: ["Admin", "Chemist"] },
     { key: "reports", label: "Reports", href: "/reports.html", roles: ["Admin", "Chemist", "Technician"] },
-    { key: "audit", label: "Audit Logs", href: "/audit-logs.html", roles: ["Admin"] }
+    { key: "audit", label: "Audit Logs", href: "/audit-logs.html", roles: ["Admin"] },
+    { key: "settings", label: "Settings", href: "/settings.html", roles: ["Admin", "Chemist", "Technician"] }
 ];
 
 export function setStatus(element, message, type = "info") {
@@ -37,7 +38,7 @@ export function mountAppLayout({ user, activePage, title, subtitle }) {
         subtitleElement.textContent = subtitle;
     }
     if (userChip) {
-        userChip.innerHTML = `<strong>${user.username}</strong><div class="subtle">${user.roleName} · ${user.email}</div>`;
+        userChip.innerHTML = `<strong>${user.username}</strong><div class="subtle">${user.roleName} &middot; ${user.email}</div>`;
     }
 
     if (!sidebar) {
@@ -51,7 +52,10 @@ export function mountAppLayout({ user, activePage, title, subtitle }) {
 
     sidebar.innerHTML = `
         <div>
-            <div class="brand-mark">CRMS Control</div>
+            <div class="brand-mark brand-mark-sidebar">
+                <img class="brand-logo" src="/assets/img/crms-logo.png" alt="CRMS logo">
+                <div class="brand-mark-text">CRMS Control</div>
+            </div>
             <div style="margin-top: 18px;">
                 <div style="font-family: var(--font-display); font-size: 1.4rem;">Chemical Recipe Management</div>
                 <div class="subtle" style="color: rgba(255,255,255,0.72); margin-top: 8px;">

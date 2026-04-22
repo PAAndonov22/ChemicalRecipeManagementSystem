@@ -30,6 +30,30 @@ void AuthController::registerRoutes(httplib::Server& server) const {
         });
     });
 
+    server.Put("/api/account/profile", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            return authService_.updateProfile(innerRequest, parseJsonBody(innerRequest), innerRequest.remote_addr);
+        });
+    });
+
+    server.Put("/api/account/password", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            return authService_.changePassword(innerRequest, parseJsonBody(innerRequest), innerRequest.remote_addr);
+        });
+    });
+
+    server.Get("/api/account/settings", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            return authService_.getSettings(innerRequest);
+        });
+    });
+
+    server.Put("/api/account/settings", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            return authService_.updateSettings(innerRequest, parseJsonBody(innerRequest), innerRequest.remote_addr);
+        });
+    });
+
     server.Get("/api/users", [this](const httplib::Request& request, httplib::Response& response) {
         handleJson(request, response, [this](const httplib::Request& innerRequest) {
             authService_.requireUser(innerRequest, {"Admin", "Chemist"});

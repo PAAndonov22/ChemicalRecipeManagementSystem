@@ -20,13 +20,23 @@ public:
     json logout(const httplib::Request& request, const std::string& ipAddress) const;
     json currentUser(const httplib::Request& request) const;
     json listUsers() const;
+    json updateProfile(const httplib::Request& request, const json& payload, const std::string& ipAddress) const;
+    json changePassword(const httplib::Request& request, const json& payload, const std::string& ipAddress) const;
+    json getSettings(const httplib::Request& request) const;
+    json updateSettings(const httplib::Request& request, const json& payload, const std::string& ipAddress) const;
 
     AuthenticatedUser requireUser(const httplib::Request& request, const std::vector<std::string>& allowedRoles = {}) const;
 
 private:
     std::string extractBearerToken(const httplib::Request& request) const;
     json toUserJson(const AuthenticatedUser& user) const;
+    json toPreferencesJson(const UserPreferences& preferences) const;
     std::string validatePassword(const json& payload) const;
+    std::string validateUsername(const json& payload, const std::string& field = "username") const;
+    std::string validateTheme(const json& payload) const;
+    std::string validateDensity(const json& payload) const;
+    std::string validateDefaultRecipeStatus(const json& payload) const;
+    std::string validateLandingPage(const json& payload) const;
 
     AuthRepository& repository_;
     AuditService& auditService_;

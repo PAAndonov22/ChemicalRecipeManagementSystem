@@ -1,16 +1,18 @@
 import { apiRequest, clearSessionData, getStoredUser, getToken, setStoredUser, setToken } from "./api.js";
+import { applyAppearance, getLandingHref } from "./preferences.js";
 
 export function redirectToLogin() {
     window.location.href = "/login.html";
 }
 
-export function redirectToDashboard() {
-    window.location.href = "/dashboard.html";
+export function redirectToDashboard(user = getStoredUser()) {
+    window.location.href = getLandingHref(user);
 }
 
 export function storeLoginSession(payload) {
     setToken(payload.token);
     setStoredUser(payload.user);
+    applyAppearance(payload.user?.preferences);
 }
 
 export async function fetchCurrentUser() {
@@ -21,9 +23,11 @@ export async function fetchCurrentUser() {
     try {
         const response = await apiRequest("/auth/me");
         setStoredUser(response.user);
+        applyAppearance(response.user?.preferences);
         return response.user;
     } catch {
         clearSessionData();
+        applyAppearance();
         return null;
     }
 }
@@ -45,4 +49,5 @@ export async function requireSession({ roles = [] } = {}) {
 
 export function clearSession() {
     clearSessionData();
+    applyAppearance();
 }

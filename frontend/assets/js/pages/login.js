@@ -14,7 +14,7 @@ form?.addEventListener("submit", async (event) => {
     setStatus(statusBox, "Signing you in...", "info");
 
     const payload = {
-        email: document.getElementById("email").value,
+        identifier: document.getElementById("identifier").value,
         password: document.getElementById("password").value
     };
 
