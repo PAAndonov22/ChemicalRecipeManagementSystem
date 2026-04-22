@@ -1,6 +1,7 @@
 #include "AuditRepository.h"
 #include "../database/Database.h"
 #include "../database/SqliteUtils.h"
+#include "../utils/JsonUtils.h"
 
 AuditRepository::AuditRepository(Database& database) : database_(database) {}
 
@@ -30,7 +31,8 @@ void AuditRepository::createEntry(const std::optional<int>& userId, const std::s
     ensureSqliteResult(sqlite3_step(statement.get()), database_.connection(), "Failed to write audit log");
 }
 
-std::vector<AuditEntry> AuditRepository::listEntries(int limit, const std::string& actionFilter) const {
+std::vector<AuditEntry> AuditRepository::listEntries(int limit, const std::string& actionFilter, const std::string& entityTypeFilter, const std::string& actorFilter, const std::string& dateFrom, const std::string& dateTo) const {
+    const std::string actorPattern = "%" + toLowerCopy(actorFilter) + "%";
     Statement statement(database_.connection(), R"sql(
         SELECT
             a.id,
@@ -48,13 +50,26 @@ std::vector<AuditEntry> AuditRepository::listEntries(int limit, const std::strin
         LEFT JOIN users u ON u.id = a.user_id
         LEFT JOIN roles r ON r.id = u.role_id
         WHERE (? = '' OR a.action = ?)
+          AND (? = '' OR a.entity_type = ?)
+          AND (? = '' OR lower(IFNULL(u.username, '')) LIKE ? OR lower(IFNULL(u.email, '')) LIKE ?)
+          AND (? = '' OR a.created_at >= ?)
+          AND (? = '' OR a.created_at <= ?)
         ORDER BY a.created_at DESC, a.id DESC
         LIMIT ?;
     )sql");
 
     sqlite3_bind_text(statement.get(), 1, actionFilter.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement.get(), 2, actionFilter.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement.get(), 3, limit);
+    sqlite3_bind_text(statement.get(), 3, entityTypeFilter.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 4, entityTypeFilter.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 5, actorFilter.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 6, actorPattern.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 7, actorPattern.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 8, dateFrom.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 9, dateFrom.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 10, dateTo.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 11, dateTo.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 12, limit);
 
     std::vector<AuditEntry> entries;
     while (sqlite3_step(statement.get()) == SQLITE_ROW) {
