@@ -87,7 +87,7 @@ if (user) {
                         <div class="stack">
                             <div><strong>Current Version:</strong> v${item.currentVersion.versionNumber} &middot; ${item.currentVersion.title}</div>
                             <div><strong>Summary:</strong> ${item.currentVersion.summary}</div>
-                            <div><strong>Instructions:</strong><br>${item.currentVersion.instructions}</div>
+                            ${isReadOnlyViewer ? `<div><strong>What It Contains:</strong> The ingredient list below shows the approved contents and quantities for this medicine.</div>` : `<div><strong>Instructions:</strong><br>${item.currentVersion.instructions}</div>`}
                         </div>
                         <div class="stack">
                             <div><strong>Safety Notes:</strong><br>${item.currentVersion.safetyNotes}</div>
