@@ -105,7 +105,7 @@ json RecipeService::versionToJson(const RecipeVersionView& version, bool include
     };
 }
 
-json RecipeService::recipeDetailToJson(const RecipeDetail& detail) const {
+json RecipeService::recipeDetailToJson(const RecipeDetail& detail, bool includePreparationDetails) const {
     json shares = json::array();
     for (const auto& share : detail.shares) {
         shares.push_back({
@@ -136,8 +136,9 @@ json RecipeService::recipeDetailToJson(const RecipeDetail& detail) const {
         {"reviewedByName", detail.reviewedByName},
         {"submittedAt", detail.submittedAt},
         {"submittedByName", detail.submittedByName},
-        {"currentVersion", versionToJson(detail.currentVersion)},
-        {"shares", shares}
+        {"currentVersion", versionToJson(detail.currentVersion, includePreparationDetails)},
+        {"shares", includePreparationDetails ? shares : json::array()},
+        {"isReadOnlyViewer", !includePreparationDetails}
     };
 }
 
