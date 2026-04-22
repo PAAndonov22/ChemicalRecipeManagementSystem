@@ -27,6 +27,7 @@ function statusTagClass(status) {
 
 const user = await requireSession();
 if (user) {
+    const isReadOnlyViewer = user.roleName === "Technician";
     mountAppLayout({
         user,
         activePage: "recipes",
