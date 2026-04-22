@@ -29,6 +29,8 @@ struct UserLoginRecord {
     std::string passwordSalt;
     bool isActive{true};
     UserPreferences preferences;
+    int failedLoginAttempts{};
+    std::string lockedUntil;
 };
 
 struct SessionRecord {
@@ -40,6 +42,33 @@ struct SessionRecord {
     bool isActive{true};
     std::string expiresAt;
     UserPreferences preferences;
+    bool rememberMe{false};
+    std::string sessionLabel;
+    std::string createdAt;
+    std::string lastUsedAt;
+};
+
+struct UserSessionView {
+    int sessionId{};
+    std::string sessionLabel;
+    bool rememberMe{false};
+    std::string createdAt;
+    std::string lastUsedAt;
+    std::string expiresAt;
+    bool current{false};
+};
+
+struct AdminUserView {
+    int id{};
+    std::string username;
+    std::string email;
+    std::string roleName;
+    bool isActive{true};
+    std::string createdAt;
+    std::string updatedAt;
+    int activeSessionCount{};
+    int failedLoginAttempts{};
+    std::string lockedUntil;
 };
 
 struct IngredientInput {
@@ -70,6 +99,7 @@ struct RecipeSummary {
     std::string name;
     std::string description;
     std::string status;
+    std::string approvalState;
     std::string ownerName;
     std::string updatedAt;
     int currentVersionNumber{};
@@ -117,10 +147,17 @@ struct RecipeDetail {
     std::string name;
     std::string description;
     std::string status;
+    std::string approvalState;
     std::string ownerName;
     std::string createdAt;
     std::string updatedAt;
     bool canEdit{false};
+    bool canApprove{false};
+    std::string reviewerComment;
+    std::string reviewedAt;
+    std::string reviewedByName;
+    std::string submittedAt;
+    std::string submittedByName;
     RecipeVersionView currentVersion;
     std::vector<RecipeShareView> shares;
 };
@@ -130,8 +167,10 @@ struct RecipeAccessInfo {
     int ownerId{};
     std::string ownerName;
     std::string status;
+    std::string approvalState;
     bool canView{false};
     bool canEdit{false};
+    bool canApprove{false};
 };
 
 struct AuditEntry {
