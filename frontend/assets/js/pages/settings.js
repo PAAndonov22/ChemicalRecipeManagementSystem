@@ -1,5 +1,6 @@
 import { apiRequest, setStoredUser } from "../services/api.js";
-import { mountAppLayout, setStatus } from "../components/layout.js";
+import { mountAppLayout, renderEmptyState, setStatus } from "../components/layout.js";
+import { bindPasswordStrength } from "../components/password-strength.js";
 import { applyAppearance, getAvailableLandingPages } from "../services/preferences.js";
 import { requireSession } from "../services/session.js";
 
@@ -8,17 +9,25 @@ if (currentUser) {
     const profileForm = document.getElementById("profile-form");
     const passwordForm = document.getElementById("password-form");
     const preferencesForm = document.getElementById("preferences-form");
+    const sessionsContainer = document.getElementById("sessions-list");
 
     const profileStatus = document.getElementById("profile-status");
     const passwordStatus = document.getElementById("password-status");
     const preferencesStatus = document.getElementById("preferences-status");
+    const sessionsStatus = document.getElementById("sessions-status");
+
+    bindPasswordStrength(
+        document.getElementById("newPassword"),
+        document.getElementById("password-strength-fill"),
+        document.getElementById("password-strength-label")
+    );
 
     function renderLayout() {
         mountAppLayout({
             user: currentUser,
             activePage: "settings",
             title: "Settings",
-            subtitle: "Control your account details, password, appearance, and day-to-day workflow defaults."
+            subtitle: "Control your account details, password, appearance, sessions, and day-to-day workflow defaults."
         });
     }
 
@@ -28,13 +37,49 @@ if (currentUser) {
 
         const landingPageField = document.getElementById("landingPage");
         landingPageField.innerHTML = getAvailableLandingPages(user)
-            .map((item) => `<option value="${item.key}">${item.key.charAt(0).toUpperCase()}${item.key.slice(1)}</option>`)
+            .map((item) => `<option value="${item.key}">${item.key.replace("-", " ").replace(/\b\w/g, (character) => character.toUpperCase())}</option>`)
             .join("");
 
         document.getElementById("theme").value = preferences.theme || "light";
         document.getElementById("density").value = preferences.density || "comfortable";
         document.getElementById("defaultRecipeStatus").value = preferences.defaultRecipeStatus || "";
         landingPageField.value = preferences.landingPage || "dashboard";
+    }
+
+    function renderSessions(items) {
+        if (!items.length) {
+            renderEmptyState(sessionsContainer, "No active sessions are currently stored for this account.");
+            return;
+        }
+
+        sessionsContainer.innerHTML = items.map((session) => `
+            <div class="session-card ${session.current ? "current" : ""}">
+                <div class="recipe-meta">
+                    <span class="tag ${session.current ? "success" : ""}">${session.current ? "Current Session" : "Saved Session"}</span>
+                    <span class="subtle">${session.rememberMe ? "Persistent sign-in" : "Standard sign-in"}</span>
+                </div>
+                <h3 style="margin-bottom: 8px;">${session.sessionLabel || "Browser session"}</h3>
+                <div class="subtle">Created: ${session.createdAt}</div>
+                <div class="subtle">Last Used: ${session.lastUsedAt}</div>
+                <div class="subtle">Expires: ${session.expiresAt}</div>
+                ${session.current ? "" : `<div class="button-row" style="margin-top: 14px;"><button class="button-danger" data-session-id="${session.sessionId}" type="button">Revoke Session</button></div>`}
+            </div>
+        `).join("");
+
+        sessionsContainer.querySelectorAll("[data-session-id]").forEach((button) => {
+            button.addEventListener("click", async () => {
+                setStatus(sessionsStatus, "Revoking session...", "info");
+                try {
+                    const response = await apiRequest(`/account/sessions/${button.dataset.sessionId}`, {
+                        method: "DELETE"
+                    });
+                    setStatus(sessionsStatus, response.message, "success");
+                    await refreshSessions();
+                } catch (error) {
+                    setStatus(sessionsStatus, error.message, "error");
+                }
+            });
+        });
     }
 
     async function refreshSettings() {
@@ -46,8 +91,14 @@ if (currentUser) {
         fillForms(currentUser, response.preferences);
     }
 
+    async function refreshSessions() {
+        const response = await apiRequest("/account/sessions");
+        renderSessions(response.items);
+    }
+
     renderLayout();
     await refreshSettings();
+    await refreshSessions();
 
     profileForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -90,6 +141,11 @@ if (currentUser) {
                 }
             });
             passwordForm.reset();
+            bindPasswordStrength(
+                document.getElementById("newPassword"),
+                document.getElementById("password-strength-fill"),
+                document.getElementById("password-strength-label")
+            );
             setStatus(passwordStatus, response.message, "success");
         } catch (error) {
             setStatus(passwordStatus, error.message, "error");
