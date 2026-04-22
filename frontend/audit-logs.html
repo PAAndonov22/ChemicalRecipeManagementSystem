@@ -26,15 +26,36 @@
                             <input id="actionFilter" placeholder="Optional exact action">
                         </div>
                         <div class="field">
+                            <label for="entityTypeFilter">Entity Type</label>
+                            <input id="entityTypeFilter" placeholder="recipes, users, user_sessions">
+                        </div>
+                        <div class="field">
+                            <label for="actorFilter">Actor</label>
+                            <input id="actorFilter" placeholder="Username or email">
+                        </div>
+                        <div class="field">
+                            <label for="dateFromFilter">From</label>
+                            <input id="dateFromFilter" type="date">
+                        </div>
+                        <div class="field">
+                            <label for="dateToFilter">To</label>
+                            <input id="dateToFilter" type="date">
+                        </div>
+                        <div class="field">
                             <label for="limitFilter">Limit</label>
                             <select id="limitFilter">
                                 <option value="25">25</option>
                                 <option value="50" selected>50</option>
                                 <option value="100">100</option>
+                                <option value="250">250</option>
                             </select>
                         </div>
-                        <button class="button" type="submit">Refresh</button>
+                        <div class="button-row">
+                            <button class="button" type="submit">Refresh</button>
+                            <button id="audit-export-button" class="button-secondary" type="button">Export CSV</button>
+                        </div>
                     </form>
+                    <div id="audit-status" class="status"></div>
                 </section>
                 <section id="audit-results" class="card"></section>
             </main>
