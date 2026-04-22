@@ -45,6 +45,7 @@ if (user) {
     const shareStatus = document.getElementById("share-status");
     const actions = document.getElementById("actions");
     const approvalPanel = document.getElementById("approval-panel");
+    const sharingSection = document.getElementById("sharing-section");
 
     if (!recipeId) {
         renderEmptyState(summary, "A recipe id is required in the URL.");
@@ -181,6 +182,7 @@ if (user) {
             `;
 
             shareForm.style.display = item.canEdit ? "grid" : "none";
+            sharingSection.style.display = item.canEdit ? "block" : "none";
 
             document.getElementById("submit-approval-button")?.addEventListener("click", async () => {
                 setStatus(shareStatus, "Submitting recipe for approval...", "info");
