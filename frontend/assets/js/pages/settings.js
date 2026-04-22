@@ -68,6 +68,9 @@ if (currentUser) {
 
         sessionsContainer.querySelectorAll("[data-session-id]").forEach((button) => {
             button.addEventListener("click", async () => {
+                if (!window.confirm("Revoke this saved session? The affected device will need to sign in again.")) {
+                    return;
+                }
                 setStatus(sessionsStatus, "Revoking session...", "info");
                 try {
                     const response = await apiRequest(`/account/sessions/${button.dataset.sessionId}`, {
