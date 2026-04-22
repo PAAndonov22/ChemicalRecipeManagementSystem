@@ -159,7 +159,8 @@ json RecipeService::getRecipe(int recipeId, const AuthenticatedUser& actor) cons
     if (!detail.has_value()) {
         throw HttpException(404, "Recipe not found.");
     }
-    return {{"item", recipeDetailToJson(detail.value())}};
+    const bool includePreparationDetails = !shouldHidePreparationDetails(actor);
+    return {{"item", recipeDetailToJson(detail.value(), includePreparationDetails)}};
 }
 
 json RecipeService::getVersions(int recipeId, const AuthenticatedUser& actor) const {
