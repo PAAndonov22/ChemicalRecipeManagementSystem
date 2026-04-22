@@ -18,12 +18,18 @@ A full-stack chemical recipe management platform built with a C++ REST API, SQLi
 - Session-token authentication
 - Role-based access control for `Admin`, `Chemist`, and `Technician`
 - Account settings for username, email, password, theme, density, landing page, and default recipe filter
+- Session management with active-session review and revocation
+- Temporary account lockout after repeated failed login attempts
 - Recipe creation and editing with immutable version snapshots
+- Approval workflow with submit, approve, reject, and reviewer comments
+- Version comparison with field-level and ingredient-level diffs
 - Ingredient normalization through reusable ingredient records
 - Recipe sharing with `read` or `edit` permission
-- Admin audit-log review
+- Admin user management for role changes, activation, and password resets
+- Admin audit-log review with actor/entity/date filters and CSV export
 - Reports for counts, status distribution, ownership, and ingredient usage
-- Static frontend pages for login, register, dashboard, recipe list, recipe details, recipe editor, version history, audit logs, and reports
+- Expanded demo dataset with 30+ recipes, 30+ versions, seeded shares, and seeded audit entries
+- Static frontend pages for login, register, dashboard, recipe list, recipe details, recipe editor, version history, audit logs, reports, settings, and admin users
 
 ## Project structure
 
@@ -136,7 +142,7 @@ The app auto-creates demo data on first startup:
 - `POST /api/auth/register`
   - body: `username`, `email`, `password`, `roleName`
 - `POST /api/auth/login`
-  - body: `identifier`, `password`
+  - body: `identifier`, `password`, optional `rememberMe`
   - `identifier` accepts either username or email
   - returns bearer token and user profile
 - `POST /api/auth/logout`
@@ -154,29 +160,53 @@ The app auto-creates demo data on first startup:
 - `PUT /api/account/settings`
   - requires `Authorization: Bearer <token>`
   - body: `theme`, `density`, `landingPage`, `defaultRecipeStatus`
+- `GET /api/account/sessions`
+  - requires `Authorization: Bearer <token>`
+  - lists current and remembered sessions
+- `DELETE /api/account/sessions/:id`
+  - requires `Authorization: Bearer <token>`
+  - revokes a non-current session
 
 ### Users
 
 - `GET /api/users`
   - admin and chemist only
   - lists active users for sharing visibility
+- `GET /api/admin/users`
+  - admin only
+  - lists user state, lockout data, and active-session counts
+- `PUT /api/admin/users/:id`
+  - admin only
+  - body: `roleName`, `isActive`
+- `POST /api/admin/users/:id/reset-password`
+  - admin only
+  - body: `newPassword`
 
 ### Recipes
 
 - `GET /api/recipes?q=<term>&status=<draft|approved|archived>`
 - `GET /api/recipes/:id`
 - `GET /api/recipes/:id/versions`
+- `GET /api/recipes/:id/compare?leftVersion=<n>&rightVersion=<n>`
 - `POST /api/recipes`
   - admin and chemist only
 - `PUT /api/recipes/:id`
   - requires edit permission
 - `POST /api/recipes/:id/share`
   - body: `email`, `permissionLevel`
+- `POST /api/recipes/:id/submit`
+  - submits a draft for admin approval
+- `POST /api/recipes/:id/review`
+  - admin only
+  - body: `decision`, optional `reviewerComment`
 
 ### Audit logs
 
-- `GET /api/audit-logs?action=<exactAction>&limit=<n>`
+- `GET /api/audit-logs?action=<exactAction>&entityType=<type>&actor=<query>&dateFrom=<yyyy-mm-dd>&dateTo=<yyyy-mm-dd>&limit=<n>`
   - admin only
+- `GET /api/audit-logs/export`
+  - same filters as `/api/audit-logs`
+  - returns CSV
 
 ### Reports
 
@@ -213,6 +243,15 @@ The script verifies:
 - reports access
 - admin audit-log access
 
+Additional manual API checks used during development:
+
+- remember-me login and session listing
+- technician visibility limited to approved recipes
+- approval submit and review flows
+- version comparison endpoint
+- admin user management endpoints
+- audit-log CSV export
+
 ## Frontend page map
 
 - [`login.html`](frontend/login.html)
@@ -225,6 +264,7 @@ The script verifies:
 - [`audit-logs.html`](frontend/audit-logs.html)
 - [`reports.html`](frontend/reports.html)
 - [`settings.html`](frontend/settings.html)
+- [`admin-users.html`](frontend/admin-users.html)
 
 ## Notes
 
