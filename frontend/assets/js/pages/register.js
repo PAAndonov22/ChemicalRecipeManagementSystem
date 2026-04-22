@@ -1,9 +1,15 @@
 import { apiRequest } from "../services/api.js";
+import { bindPasswordStrength } from "../components/password-strength.js";
 import { fetchCurrentUser, redirectToDashboard } from "../services/session.js";
 import { setStatus } from "../components/layout.js";
 
 const form = document.getElementById("register-form");
 const statusBox = document.getElementById("status");
+bindPasswordStrength(
+    document.getElementById("password"),
+    document.getElementById("password-strength-fill"),
+    document.getElementById("password-strength-label")
+);
 
 if (await fetchCurrentUser()) {
     redirectToDashboard();
