@@ -77,7 +77,7 @@ json RecipeService::recipeSummaryToJson(const RecipeSummary& recipe) const {
     };
 }
 
-json RecipeService::versionToJson(const RecipeVersionView& version) const {
+json RecipeService::versionToJson(const RecipeVersionView& version, bool includePreparationDetails) const {
     json ingredients = json::array();
     for (const auto& ingredient : version.ingredients) {
         ingredients.push_back({
@@ -96,9 +96,9 @@ json RecipeService::versionToJson(const RecipeVersionView& version) const {
         {"versionNumber", version.versionNumber},
         {"title", version.title},
         {"summary", version.summary},
-        {"instructions", version.instructions},
-        {"safetyNotes", version.safetyNotes},
-        {"changeSummary", version.changeSummary},
+        {"instructions", includePreparationDetails ? json(version.instructions) : json("")},
+        {"safetyNotes", includePreparationDetails ? json(version.safetyNotes) : json("")},
+        {"changeSummary", includePreparationDetails ? json(version.changeSummary) : json("")},
         {"createdAt", version.createdAt},
         {"createdByName", version.createdByName},
         {"ingredients", ingredients}
