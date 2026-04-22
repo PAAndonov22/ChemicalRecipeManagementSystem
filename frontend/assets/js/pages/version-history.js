@@ -4,11 +4,14 @@ import { requireSession } from "../services/session.js";
 
 const user = await requireSession();
 if (user) {
+    const isReadOnlyViewer = user.roleName === "Technician";
     mountAppLayout({
         user,
         activePage: "recipes",
         title: "Version History",
-        subtitle: "Inspect every stored revision and compare two snapshots side by side."
+        subtitle: isReadOnlyViewer
+            ? "Review ingredient snapshots for approved medicine revisions available to your role."
+            : "Inspect every stored revision and compare two snapshots side by side."
     });
 
     const recipeId = new URLSearchParams(window.location.search).get("id");
