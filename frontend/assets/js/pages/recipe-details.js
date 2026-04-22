@@ -32,7 +32,9 @@ if (user) {
         user,
         activePage: "recipes",
         title: "Recipe Details",
-        subtitle: "Review the active formulation, approval state, version snapshot, and sharing controls."
+        subtitle: isReadOnlyViewer
+            ? "Review the medicine description and ingredient composition available to your role."
+            : "Review the active formulation, approval state, version snapshot, and sharing controls."
     });
 
     const recipeId = new URLSearchParams(window.location.search).get("id");
