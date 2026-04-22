@@ -31,6 +31,7 @@ RecipeAccessInfo requireAccess(Database& database, int recipeId, const Authentic
             COALESCE(r.approval_state, 'draft'),
             CASE
                 WHEN ? = 'Admin' THEN 1
+                WHEN ? = 'Technician' THEN 0
                 WHEN r.owner_id = ? THEN 1
                 WHEN sr.permission_level = 'edit' THEN 1
                 ELSE 0
@@ -54,13 +55,14 @@ RecipeAccessInfo requireAccess(Database& database, int recipeId, const Authentic
     )sql");
 
     sqlite3_bind_text(statement.get(), 1, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement.get(), 2, actor.id);
-    sqlite3_bind_text(statement.get(), 3, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement.get(), 4, actor.id);
-    sqlite3_bind_text(statement.get(), 5, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 2, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 3, actor.id);
+    sqlite3_bind_text(statement.get(), 4, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 5, actor.id);
     sqlite3_bind_text(statement.get(), 6, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement.get(), 7, actor.id);
-    sqlite3_bind_int(statement.get(), 8, recipeId);
+    sqlite3_bind_text(statement.get(), 7, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 8, actor.id);
+    sqlite3_bind_int(statement.get(), 9, recipeId);
 
     if (sqlite3_step(statement.get()) != SQLITE_ROW) {
         throw HttpException(404, "Recipe not found.");
