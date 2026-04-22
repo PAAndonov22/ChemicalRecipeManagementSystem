@@ -21,6 +21,8 @@ public:
     int createRecipe(const RecipeMutationInput& input, const AuthenticatedUser& actor) const;
     void updateRecipe(int recipeId, const RecipeMutationInput& input, const AuthenticatedUser& actor) const;
     void shareRecipe(int recipeId, int targetUserId, const std::string& permissionLevel, int sharedByUserId) const;
+    void submitForApproval(int recipeId, int actorId) const;
+    void reviewRecipe(int recipeId, const std::string& approvalState, const std::string& reviewerComment, int reviewerId) const;
 
 private:
     Database& database_;
