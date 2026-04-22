@@ -164,9 +164,10 @@ json RecipeService::getRecipe(int recipeId, const AuthenticatedUser& actor) cons
 }
 
 json RecipeService::getVersions(int recipeId, const AuthenticatedUser& actor) const {
+    const bool includePreparationDetails = !shouldHidePreparationDetails(actor);
     json versions = json::array();
     for (const auto& version : repository_.listVersions(recipeId, actor)) {
-        versions.push_back(versionToJson(version));
+        versions.push_back(versionToJson(version, includePreparationDetails));
     }
     return {{"items", versions}};
 }
