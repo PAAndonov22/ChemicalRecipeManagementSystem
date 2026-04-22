@@ -6,6 +6,7 @@ const navItems = [
     { key: "recipes", label: "Recipe List", href: "/recipes.html", roles: ["Admin", "Chemist", "Technician"] },
     { key: "editor", label: "Create Recipe", href: "/recipe-editor.html", roles: ["Admin", "Chemist"] },
     { key: "reports", label: "Reports", href: "/reports.html", roles: ["Admin", "Chemist", "Technician"] },
+    { key: "admin-users", label: "Users", href: "/admin-users.html", roles: ["Admin"] },
     { key: "audit", label: "Audit Logs", href: "/audit-logs.html", roles: ["Admin"] },
     { key: "settings", label: "Settings", href: "/settings.html", roles: ["Admin", "Chemist", "Technician"] }
 ];
