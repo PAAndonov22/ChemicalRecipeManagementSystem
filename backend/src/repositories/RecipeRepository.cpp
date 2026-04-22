@@ -238,6 +238,7 @@ std::vector<RecipeSummary> RecipeRepository::listAccessibleRecipes(const Authent
             COALESCE(rv.version_number, 0),
             CASE
                 WHEN ? = 1 THEN 1
+                WHEN ? = 'Technician' THEN 0
                 WHEN r.owner_id = ? THEN 1
                 WHEN sr.permission_level = 'edit' THEN 1
                 ELSE 0
@@ -265,16 +266,17 @@ std::vector<RecipeSummary> RecipeRepository::listAccessibleRecipes(const Authent
 
     Statement statement(database_.connection(), sql);
     sqlite3_bind_int(statement.get(), 1, admin ? 1 : 0);
-    sqlite3_bind_int(statement.get(), 2, actor.id);
+    sqlite3_bind_text(statement.get(), 2, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(statement.get(), 3, actor.id);
     sqlite3_bind_int(statement.get(), 4, actor.id);
-    sqlite3_bind_text(statement.get(), 5, search.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement.get(), 6, searchPattern.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 5, actor.id);
+    sqlite3_bind_text(statement.get(), 6, search.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement.get(), 7, searchPattern.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement.get(), 8, statusFilter.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 8, searchPattern.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement.get(), 9, statusFilter.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 10, statusFilter.c_str(), -1, SQLITE_TRANSIENT);
     if (!admin) {
-        sqlite3_bind_int(statement.get(), 10, actor.id);
+        sqlite3_bind_int(statement.get(), 11, actor.id);
     }
 
     std::vector<RecipeSummary> recipes;
