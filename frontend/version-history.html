@@ -18,7 +18,25 @@
                 </div>
                 <div id="user-chip" class="user-chip"></div>
             </header>
-            <main id="history" class="page-grid"></main>
+            <main class="page-grid">
+                <section id="compare" class="card comparison-toolbar">
+                    <div class="section-title">Version Comparison</div>
+                    <div id="compare-status" class="status"></div>
+                    <form id="compare-form" class="inline-form">
+                        <div class="field">
+                            <label for="leftVersion">Left Version</label>
+                            <select id="leftVersion"></select>
+                        </div>
+                        <div class="field">
+                            <label for="rightVersion">Right Version</label>
+                            <select id="rightVersion"></select>
+                        </div>
+                        <button class="button" type="submit">Compare</button>
+                    </form>
+                    <div id="comparison-results"></div>
+                </section>
+                <section id="history" class="page-grid"></section>
+            </main>
         </div>
     </div>
     <script type="module" src="/assets/js/pages/version-history.js"></script>
