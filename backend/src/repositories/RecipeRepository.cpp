@@ -4,8 +4,6 @@
 #include "../utils/HttpException.h"
 #include "../utils/JsonUtils.h"
 
-#include <map>
-
 namespace {
 bool isAdmin(const AuthenticatedUser& user) {
     return user.roleName == "Admin";
@@ -15,6 +13,14 @@ bool isTechnician(const AuthenticatedUser& user) {
     return user.roleName == "Technician";
 }
 
+std::string normalizeWorkflowStatus(const std::string& inputStatus) {
+    return inputStatus == "archived" ? "archived" : "draft";
+}
+
+std::string initialApprovalStateForStatus(const std::string& normalizedStatus) {
+    return normalizedStatus == "archived" ? "approved" : "draft";
+}
+
 RecipeAccessInfo requireAccess(Database& database, int recipeId, const AuthenticatedUser& actor) {
     Statement statement(database.connection(), R"sql(
         SELECT
@@ -22,6 +28,7 @@ RecipeAccessInfo requireAccess(Database& database, int recipeId, const Authentic
             r.owner_id,
             owner.username,
             r.status,
+            COALESCE(r.approval_state, 'draft'),
             CASE
                 WHEN ? = 'Admin' THEN 1
                 WHEN r.owner_id = ? THEN 1
@@ -31,10 +38,14 @@ RecipeAccessInfo requireAccess(Database& database, int recipeId, const Authentic
             CASE
                 WHEN ? = 'Admin' THEN 1
                 WHEN r.owner_id = ? THEN 1
-                WHEN ? = 'Technician' AND r.status <> 'approved' THEN 0
+                WHEN ? = 'Technician' AND (r.status <> 'approved' OR COALESCE(r.approval_state, 'draft') <> 'approved') THEN 0
                 WHEN sr.id IS NOT NULL THEN 1
                 ELSE 0
-            END AS can_view
+            END AS can_view,
+            CASE
+                WHEN ? = 'Admin' AND COALESCE(r.approval_state, 'draft') = 'pending_approval' AND r.status <> 'archived' THEN 1
+                ELSE 0
+            END AS can_approve
         FROM recipes r
         JOIN users owner ON owner.id = r.owner_id
         LEFT JOIN shared_recipes sr ON sr.recipe_id = r.id AND sr.shared_with_user_id = ?
@@ -47,8 +58,9 @@ RecipeAccessInfo requireAccess(Database& database, int recipeId, const Authentic
     sqlite3_bind_text(statement.get(), 3, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(statement.get(), 4, actor.id);
     sqlite3_bind_text(statement.get(), 5, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement.get(), 6, actor.id);
-    sqlite3_bind_int(statement.get(), 7, recipeId);
+    sqlite3_bind_text(statement.get(), 6, actor.roleName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 7, actor.id);
+    sqlite3_bind_int(statement.get(), 8, recipeId);
 
     if (sqlite3_step(statement.get()) != SQLITE_ROW) {
         throw HttpException(404, "Recipe not found.");
@@ -59,8 +71,10 @@ RecipeAccessInfo requireAccess(Database& database, int recipeId, const Authentic
         sqlite3_column_int(statement.get(), 1),
         columnText(statement.get(), 2),
         columnText(statement.get(), 3),
+        columnText(statement.get(), 4),
+        sqlite3_column_int(statement.get(), 6) == 1,
         sqlite3_column_int(statement.get(), 5) == 1,
-        sqlite3_column_int(statement.get(), 4) == 1
+        sqlite3_column_int(statement.get(), 7) == 1
     };
 }
 
@@ -216,6 +230,7 @@ std::vector<RecipeSummary> RecipeRepository::listAccessibleRecipes(const Authent
             r.name,
             r.description,
             r.status,
+            COALESCE(r.approval_state, 'draft'),
             owner.username,
             r.updated_at,
             COALESCE(rv.version_number, 0),
@@ -241,7 +256,7 @@ std::vector<RecipeSummary> RecipeRepository::listAccessibleRecipes(const Authent
         sql += " AND (r.owner_id = ? OR sr.id IS NOT NULL)";
     }
     if (technician) {
-        sql += " AND r.status = 'approved'";
+        sql += " AND r.status = 'approved' AND COALESCE(r.approval_state, 'draft') = 'approved'";
     }
 
     sql += " ORDER BY r.updated_at DESC, r.id DESC;";
@@ -270,9 +285,10 @@ std::vector<RecipeSummary> RecipeRepository::listAccessibleRecipes(const Authent
             columnText(statement.get(), 4),
             columnText(statement.get(), 5),
             columnText(statement.get(), 6),
-            sqlite3_column_int(statement.get(), 7),
-            sqlite3_column_int(statement.get(), 8) == 1,
-            sqlite3_column_int(statement.get(), 9) == 1
+            columnText(statement.get(), 7),
+            sqlite3_column_int(statement.get(), 8),
+            sqlite3_column_int(statement.get(), 9) == 1,
+            sqlite3_column_int(statement.get(), 10) == 1
         });
     }
 
@@ -294,9 +310,15 @@ std::optional<RecipeDetail> RecipeRepository::findRecipeDetail(int recipeId, con
             r.name,
             r.description,
             r.status,
+            COALESCE(r.approval_state, 'draft'),
             owner.username,
             r.created_at,
             r.updated_at,
+            COALESCE(r.reviewer_comment, ''),
+            COALESCE(r.reviewed_at, ''),
+            COALESCE(reviewer.username, ''),
+            COALESCE(r.submitted_at, ''),
+            COALESCE(submitter.username, ''),
             rv.id,
             COALESCE(rv.version_number, 0),
             IFNULL(rv.title, ''),
@@ -308,6 +330,8 @@ std::optional<RecipeDetail> RecipeRepository::findRecipeDetail(int recipeId, con
             IFNULL(version_author.username, '')
         FROM recipes r
         JOIN users owner ON owner.id = r.owner_id
+        LEFT JOIN users reviewer ON reviewer.id = r.reviewed_by
+        LEFT JOIN users submitter ON submitter.id = r.submitted_by
         LEFT JOIN recipe_versions rv ON rv.id = r.current_version_id
         LEFT JOIN users version_author ON version_author.id = rv.created_by
         WHERE r.id = ?
@@ -327,20 +351,27 @@ std::optional<RecipeDetail> RecipeRepository::findRecipeDetail(int recipeId, con
     detail.name = columnText(statement.get(), 4);
     detail.description = columnText(statement.get(), 5);
     detail.status = columnText(statement.get(), 6);
-    detail.ownerName = columnText(statement.get(), 7);
-    detail.createdAt = columnText(statement.get(), 8);
-    detail.updatedAt = columnText(statement.get(), 9);
+    detail.approvalState = columnText(statement.get(), 7);
+    detail.ownerName = columnText(statement.get(), 8);
+    detail.createdAt = columnText(statement.get(), 9);
+    detail.updatedAt = columnText(statement.get(), 10);
+    detail.reviewerComment = columnText(statement.get(), 11);
+    detail.reviewedAt = columnText(statement.get(), 12);
+    detail.reviewedByName = columnText(statement.get(), 13);
+    detail.submittedAt = columnText(statement.get(), 14);
+    detail.submittedByName = columnText(statement.get(), 15);
     detail.canEdit = access.canEdit;
+    detail.canApprove = access.canApprove;
     detail.currentVersion = RecipeVersionView{
-        sqlite3_column_int(statement.get(), 10),
-        sqlite3_column_int(statement.get(), 11),
-        columnText(statement.get(), 12),
-        columnText(statement.get(), 13),
-        columnText(statement.get(), 14),
-        columnText(statement.get(), 15),
-        columnText(statement.get(), 16),
-        columnText(statement.get(), 17),
+        sqlite3_column_int(statement.get(), 16),
+        sqlite3_column_int(statement.get(), 17),
         columnText(statement.get(), 18),
+        columnText(statement.get(), 19),
+        columnText(statement.get(), 20),
+        columnText(statement.get(), 21),
+        columnText(statement.get(), 22),
+        columnText(statement.get(), 23),
+        columnText(statement.get(), 24),
         {}
     };
 
@@ -410,16 +441,23 @@ std::vector<RecipeVersionView> RecipeRepository::listVersions(int recipeId, cons
 int RecipeRepository::createRecipe(const RecipeMutationInput& input, const AuthenticatedUser& actor) const {
     database_.beginTransaction();
     try {
+        const std::string normalizedStatus = normalizeWorkflowStatus(input.status);
+        const std::string approvalState = initialApprovalStateForStatus(normalizedStatus);
+
         Statement insertRecipe(database_.connection(), R"sql(
-            INSERT INTO recipes (code, name, description, status, owner_id, current_version_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+            INSERT INTO recipes (
+                code, name, description, status, approval_state, owner_id, current_version_id,
+                submitted_at, submitted_by, reviewed_at, reviewed_by, reviewer_comment, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, NULL, '', NULL, '', NULL, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
         )sql");
 
         sqlite3_bind_text(insertRecipe.get(), 1, input.code.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(insertRecipe.get(), 2, input.name.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(insertRecipe.get(), 3, input.description.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(insertRecipe.get(), 4, input.status.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_int(insertRecipe.get(), 5, actor.id);
+        sqlite3_bind_text(insertRecipe.get(), 4, normalizedStatus.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(insertRecipe.get(), 5, approvalState.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(insertRecipe.get(), 6, actor.id);
         ensureSqliteResult(sqlite3_step(insertRecipe.get()), database_.connection(), "Failed to create recipe");
 
         const int recipeId = static_cast<int>(database_.lastInsertId());
@@ -447,18 +485,31 @@ void RecipeRepository::updateRecipe(int recipeId, const RecipeMutationInput& inp
     database_.beginTransaction();
     try {
         const int versionNumber = nextVersionNumber(database_, recipeId);
+        const std::string normalizedStatus = normalizeWorkflowStatus(input.status);
+        const std::string approvalState = initialApprovalStateForStatus(normalizedStatus);
 
         Statement updateRecipe(database_.connection(), R"sql(
             UPDATE recipes
-            SET code = ?, name = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+            SET code = ?,
+                name = ?,
+                description = ?,
+                status = ?,
+                approval_state = ?,
+                submitted_at = '',
+                submitted_by = NULL,
+                reviewed_at = '',
+                reviewed_by = NULL,
+                reviewer_comment = '',
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ?;
         )sql");
 
         sqlite3_bind_text(updateRecipe.get(), 1, input.code.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(updateRecipe.get(), 2, input.name.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(updateRecipe.get(), 3, input.description.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(updateRecipe.get(), 4, input.status.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_int(updateRecipe.get(), 5, recipeId);
+        sqlite3_bind_text(updateRecipe.get(), 4, normalizedStatus.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(updateRecipe.get(), 5, approvalState.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(updateRecipe.get(), 6, recipeId);
         ensureSqliteResult(sqlite3_step(updateRecipe.get()), database_.connection(), "Failed to update recipe");
 
         const int versionId = insertVersion(database_, recipeId, input, actor.id, versionNumber);
@@ -495,4 +546,43 @@ void RecipeRepository::shareRecipe(int recipeId, int targetUserId, const std::st
     sqlite3_bind_int(statement.get(), 3, sharedByUserId);
     sqlite3_bind_text(statement.get(), 4, permissionLevel.c_str(), -1, SQLITE_TRANSIENT);
     ensureSqliteResult(sqlite3_step(statement.get()), database_.connection(), "Failed to share recipe");
+}
+
+void RecipeRepository::submitForApproval(int recipeId, int actorId) const {
+    Statement statement(database_.connection(), R"sql(
+        UPDATE recipes
+        SET approval_state = 'pending_approval',
+            status = CASE WHEN status = 'archived' THEN 'archived' ELSE 'draft' END,
+            submitted_at = CURRENT_TIMESTAMP,
+            submitted_by = ?,
+            reviewed_at = '',
+            reviewed_by = NULL,
+            reviewer_comment = '',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?;
+    )sql");
+    sqlite3_bind_int(statement.get(), 1, actorId);
+    sqlite3_bind_int(statement.get(), 2, recipeId);
+    ensureSqliteResult(sqlite3_step(statement.get()), database_.connection(), "Failed to submit recipe for approval");
+}
+
+void RecipeRepository::reviewRecipe(int recipeId, const std::string& approvalState, const std::string& reviewerComment, int reviewerId) const {
+    const std::string status = approvalState == "approved" ? "approved" : "draft";
+
+    Statement statement(database_.connection(), R"sql(
+        UPDATE recipes
+        SET approval_state = ?,
+            status = ?,
+            reviewed_at = CURRENT_TIMESTAMP,
+            reviewed_by = ?,
+            reviewer_comment = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?;
+    )sql");
+    sqlite3_bind_text(statement.get(), 1, approvalState.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement.get(), 2, status.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 3, reviewerId);
+    sqlite3_bind_text(statement.get(), 4, reviewerComment.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement.get(), 5, recipeId);
+    ensureSqliteResult(sqlite3_step(statement.get()), database_.connection(), "Failed to review recipe approval");
 }
