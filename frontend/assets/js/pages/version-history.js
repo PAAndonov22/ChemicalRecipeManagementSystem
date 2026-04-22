@@ -117,6 +117,9 @@ if (user) {
                 compareForm.style.display = "none";
                 comparisonResults.innerHTML = `<div class="empty-state">Save another revision to unlock side-by-side comparison.</div>`;
             } else {
+                if (window.location.hash === "#compare") {
+                    document.getElementById("compare")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
                 await loadComparison();
             }
 
