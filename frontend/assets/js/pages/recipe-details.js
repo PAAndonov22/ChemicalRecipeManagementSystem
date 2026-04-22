@@ -174,8 +174,8 @@ if (user) {
 
             actions.innerHTML = `
                 <div class="button-row">
-                    <a class="button-secondary" href="/version-history.html?id=${item.id}">View Version History</a>
-                    <a class="button-secondary" href="/version-history.html?id=${item.id}#compare">Compare Versions</a>
+                    ${isReadOnlyViewer ? "" : `<a class="button-secondary" href="/version-history.html?id=${item.id}">View Version History</a>
+                    <a class="button-secondary" href="/version-history.html?id=${item.id}#compare">Compare Versions</a>`}
                     ${item.canEdit ? `<a class="button" href="/recipe-editor.html?id=${item.id}">Edit Recipe</a>` : ""}
                 </div>
             `;
