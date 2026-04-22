@@ -264,8 +264,8 @@ json RecipeService::compareVersions(int recipeId, const AuthenticatedUser& actor
     }
 
     return {
-        {"leftVersion", versionToJson(left)},
-        {"rightVersion", versionToJson(right)},
+        {"leftVersion", versionToJson(left, true)},
+        {"rightVersion", versionToJson(right, true)},
         {"fieldDiffs", fieldDiffs},
         {"ingredientDiffs", ingredientDiffs}
     };

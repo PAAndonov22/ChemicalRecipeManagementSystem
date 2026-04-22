@@ -139,9 +139,9 @@ if (user) {
                         </div>
                         <h3>${version.title}</h3>
                         <p>${version.summary}</p>
-                        <p><strong>Change Summary:</strong> ${version.changeSummary}</p>
+                        ${isReadOnlyViewer ? "" : `<p><strong>Change Summary:</strong> ${version.changeSummary}</p>
                         <p><strong>Instructions:</strong><br>${version.instructions}</p>
-                        <p><strong>Safety Notes:</strong><br>${version.safetyNotes}</p>
+                        <p><strong>Safety Notes:</strong><br>${version.safetyNotes}</p>`}
                         <div class="table-wrap">
                             <table>
                                 <thead><tr><th>Order</th><th>Ingredient</th><th>Quantity</th><th>Unit</th><th>Notes</th></tr></thead>
