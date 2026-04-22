@@ -29,6 +29,13 @@ void RecipeController::registerRoutes(httplib::Server& server) const {
         });
     });
 
+    server.Get(R"(/api/recipes/(\d+)/compare)", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            const auto user = authService_.requireUser(innerRequest);
+            return recipeService_.compareVersions(std::stoi(innerRequest.matches[1].str()), user, innerRequest);
+        });
+    });
+
     server.Post("/api/recipes", [this](const httplib::Request& request, httplib::Response& response) {
         handleJson(request, response, [this](const httplib::Request& innerRequest) {
             const auto user = authService_.requireUser(innerRequest);
@@ -47,6 +54,20 @@ void RecipeController::registerRoutes(httplib::Server& server) const {
         handleJson(request, response, [this](const httplib::Request& innerRequest) {
             const auto user = authService_.requireUser(innerRequest);
             return recipeService_.shareRecipe(std::stoi(innerRequest.matches[1].str()), user, parseJsonBody(innerRequest), innerRequest.remote_addr);
+        });
+    });
+
+    server.Post(R"(/api/recipes/(\d+)/submit)", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            const auto user = authService_.requireUser(innerRequest);
+            return recipeService_.submitForApproval(std::stoi(innerRequest.matches[1].str()), user, innerRequest.remote_addr);
+        });
+    });
+
+    server.Post(R"(/api/recipes/(\d+)/review)", [this](const httplib::Request& request, httplib::Response& response) {
+        handleJson(request, response, [this](const httplib::Request& innerRequest) {
+            const auto user = authService_.requireUser(innerRequest);
+            return recipeService_.reviewRecipe(std::stoi(innerRequest.matches[1].str()), user, parseJsonBody(innerRequest), innerRequest.remote_addr);
         });
     });
 }
