@@ -178,7 +178,7 @@ public class RecipeService {
             throw new ApiException(403, "You do not have permission to share this recipe.");
         }
 
-        String email = ValidationUtils.normalizeEmail(ValidationUtils.requiredString(payload, "email", 5, 120));
+        String email = ValidationUtils.requiredEmail(payload, "email");
         String permissionLevel = ValidationUtils.requireEnum(ValidationUtils.requiredString(payload, "permissionLevel", 4, 10), Set.of("read", "edit"), "permissionLevel");
 
         AuthenticatedUser targetUser = authRepository.findUserByEmailBasic(email)
