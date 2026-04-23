@@ -152,6 +152,9 @@ public class AuthService {
         if (actor.id() == userId && !isActive) {
             throw new ApiException(400, "You cannot deactivate your own admin account.");
         }
+        if (actor.id() == userId && !"Admin".equals(roleName)) {
+            throw new ApiException(400, "You cannot remove your own admin role.");
+        }
 
         repository.updateUserRoleAndStatus(userId, roleName, isActive);
         if (!isActive) {
