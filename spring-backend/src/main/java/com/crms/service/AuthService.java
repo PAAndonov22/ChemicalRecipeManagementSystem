@@ -229,6 +229,7 @@ public class AuthService {
         String newHash = passwordHasher.hashPassword(newPassword, newSalt);
         repository.updatePassword(session.userId(), newHash, newSalt);
         repository.clearFailedLoginState(session.userId());
+        repository.revokeAllSessionsForUser(session.userId(), session.sessionId());
         auditService.log(Optional.of(session.userId()), "USER_PASSWORD_CHANGED", "users", Optional.of(session.userId()), "User changed account password", ipAddress);
         return Map.of("message", "Password updated successfully.");
     }
