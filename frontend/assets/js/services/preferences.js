@@ -34,7 +34,7 @@ export function applyAppearance(preferences = DEFAULT_PREFERENCES) {
         ...(preferences || {})
     };
 
-    document.documentElement.dataset.theme = safePreferences.theme === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = ["light", "dark", "onyx"].includes(safePreferences.theme) ? safePreferences.theme : "light";
     document.documentElement.dataset.density = safePreferences.density === "compact" ? "compact" : "comfortable";
 }
 
