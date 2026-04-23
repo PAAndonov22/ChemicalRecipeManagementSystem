@@ -66,6 +66,13 @@ class CrmsApplicationTests {
 
     @Test
     void adminCannotRemoveOwnAdminRole() {
+        Map<String, Object> chemistLogin = authService.login(Map.of(
+            "identifier", "chemist@crms.local",
+            "password", "Chemist123!"
+        ), "127.0.0.1");
+        Map<String, Object> chemist = castMap(chemistLogin.get("user"));
+        int chemistId = ((Number) chemist.get("id")).intValue();
+
         Map<String, Object> login = authService.login(Map.of(
             "identifier", "admin@crms.local",
             "password", "Admin123!"
@@ -75,6 +82,16 @@ class CrmsApplicationTests {
         int adminId = ((Number) user.get("id")).intValue();
 
         MockHttpServletRequest request = bearerRequest((String) login.get("token"));
+        authService.updateAdminUser(
+            chemistId,
+            request,
+            Map.of(
+                "roleName", "Admin",
+                "isActive", true
+            ),
+            "127.0.0.1"
+        );
+
         ApiException exception = assertThrows(ApiException.class, () -> authService.updateAdminUser(
             adminId,
             request,
@@ -87,6 +104,16 @@ class CrmsApplicationTests {
 
         assertEquals(400, exception.getStatus());
         assertTrue(exception.getMessage().contains("own admin role"));
+
+        authService.updateAdminUser(
+            chemistId,
+            request,
+            Map.of(
+                "roleName", "Chemist",
+                "isActive", true
+            ),
+            "127.0.0.1"
+        );
     }
 
     @Test
@@ -117,15 +144,16 @@ class CrmsApplicationTests {
     @Test
     void profileUpdateRejectsInvalidEmailAddress() {
         Map<String, Object> login = authService.login(Map.of(
-            "identifier", "user@crms.local",
-            "password", "User123!"
+            "identifier", "chemist@crms.local",
+            "password", "Chemist123!"
         ), "127.0.0.1");
+        Map<String, Object> user = castMap(login.get("user"));
 
         MockHttpServletRequest request = bearerRequest((String) login.get("token"));
         ApiException exception = assertThrows(ApiException.class, () -> authService.updateProfile(
             request,
             Map.of(
-                "username", "useraccount",
+                "username", user.get("username"),
                 "email", "broken-email"
             ),
             "127.0.0.1"
@@ -133,6 +161,34 @@ class CrmsApplicationTests {
 
         assertEquals(400, exception.getStatus());
         assertTrue(exception.getMessage().contains("valid email address"));
+    }
+
+    @Test
+    void passwordChangeRevokesOtherSavedSessions() {
+        Map<String, Object> firstLogin = authService.login(Map.of(
+            "identifier", "user@crms.local",
+            "password", "User123!"
+        ), "127.0.0.1");
+        Map<String, Object> secondLogin = authService.login(Map.of(
+            "identifier", "user@crms.local",
+            "password", "User123!"
+        ), "127.0.0.1");
+
+        MockHttpServletRequest currentSessionRequest = bearerRequest((String) firstLogin.get("token"));
+        authService.changePassword(
+            currentSessionRequest,
+            Map.of(
+                "currentPassword", "User123!",
+                "newPassword", "UpdatedUser123!"
+            ),
+            "127.0.0.1"
+        );
+
+        MockHttpServletRequest revokedSessionRequest = bearerRequest((String) secondLogin.get("token"));
+        ApiException exception = assertThrows(ApiException.class, () -> authService.currentUser(revokedSessionRequest));
+
+        assertEquals(401, exception.getStatus());
+        assertTrue(exception.getMessage().contains("invalid or expired"));
     }
 
     private MockHttpServletRequest bearerRequest(String token) {

@@ -149,19 +149,18 @@ public class AuthService {
         String roleName = ValidationUtils.requireEnum(ValidationUtils.requiredString(payload, "roleName", 5, 20), Set.of("Admin", "Chemist", "Technician"), "roleName");
         boolean isActive = ValidationUtils.optionalBoolean(payload, "isActive", true);
 
-        if (actor.id() == userId && !isActive) {
-            throw new ApiException(400, "You cannot deactivate your own admin account.");
-        }
-        if (actor.id() == userId && !"Admin".equals(roleName)) {
-            throw new ApiException(400, "You cannot remove your own admin role.");
-        }
-
         AuthenticatedUser targetUser = repository.findUserById(userId)
             .orElseThrow(() -> new ApiException(404, "User not found."));
         if ("Admin".equals(targetUser.roleName())
             && (!isActive || !"Admin".equals(roleName))
             && repository.countActiveAdmins() <= 1) {
             throw new ApiException(400, "At least one active admin account must remain.");
+        }
+        if (actor.id() == userId && !isActive) {
+            throw new ApiException(400, "You cannot deactivate your own admin account.");
+        }
+        if (actor.id() == userId && !"Admin".equals(roleName)) {
+            throw new ApiException(400, "You cannot remove your own admin role.");
         }
 
         repository.updateUserRoleAndStatus(userId, roleName, isActive);
