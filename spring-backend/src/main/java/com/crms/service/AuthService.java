@@ -44,7 +44,7 @@ public class AuthService {
 
     public Map<String, Object> registerUser(Map<String, Object> payload, String ipAddress) {
         String username = validateUsername(payload, "username");
-        String email = ValidationUtils.normalizeEmail(ValidationUtils.requiredString(payload, "email", 5, 120));
+        String email = ValidationUtils.requiredEmail(payload, "email");
         String password = validatePassword(payload, "password");
 
         String roleName = payload.get("roleName") instanceof String value ? value.trim() : "Technician";
