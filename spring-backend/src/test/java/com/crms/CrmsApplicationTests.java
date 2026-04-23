@@ -70,4 +70,9 @@ class CrmsApplicationTests {
         return request;
     }
 
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castMap(Object value) {
+        return (Map<String, Object>) value;
+    }
+
 }
