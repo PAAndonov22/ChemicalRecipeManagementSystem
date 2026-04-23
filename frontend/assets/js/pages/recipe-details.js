@@ -1,5 +1,5 @@
 import { apiRequest } from "../services/api.js";
-import { mountAppLayout, renderEmptyState, setStatus } from "../components/layout.js";
+import { mountAppLayout, renderEmptyState, renderLoadingState, setStatus } from "../components/layout.js";
 import { requireSession } from "../services/session.js";
 
 function approvalTagClass(state) {
@@ -50,6 +50,12 @@ if (user) {
     if (!recipeId) {
         renderEmptyState(summary, "A recipe id is required in the URL.");
     } else {
+        renderLoadingState(actions, { count: 1, type: "card" });
+        renderLoadingState(approvalPanel, { count: 1, type: "card" });
+        renderLoadingState(summary, { count: 1, type: "card" });
+        renderLoadingState(ingredients, { count: 5, type: "table" });
+        renderLoadingState(shares, { count: 4, type: "table" });
+
         async function loadRecipe() {
             const response = await apiRequest(`/recipes/${recipeId}`);
             const item = response.item;
@@ -174,10 +180,15 @@ if (user) {
             }
 
             actions.innerHTML = `
-                <div class="button-row">
+                <div class="toolbar compact-start">
+                    <div class="button-row">
+                        <a class="button-secondary" href="/recipes.html">Back To Library</a>
+                    </div>
+                    <div class="button-row">
                     ${isReadOnlyViewer ? "" : `<a class="button-secondary" href="/version-history.html?id=${item.id}">View Version History</a>
                     <a class="button-secondary" href="/version-history.html?id=${item.id}#compare">Compare Versions</a>`}
                     ${item.canEdit ? `<a class="button" href="/recipe-editor.html?id=${item.id}">Edit Recipe</a>` : ""}
+                    </div>
                 </div>
             `;
 
