@@ -1,5 +1,5 @@
 import { apiRequest } from "../services/api.js";
-import { mountAppLayout, renderEmptyState } from "../components/layout.js";
+import { mountAppLayout, renderEmptyState, renderLoadingState } from "../components/layout.js";
 import { getUserPreferences } from "../services/preferences.js";
 import { requireSession } from "../services/session.js";
 
@@ -14,6 +14,7 @@ if (user) {
 
     const form = document.getElementById("filter-form");
     const listContainer = document.getElementById("recipe-list");
+    const resetFiltersButton = document.getElementById("reset-filters");
     const preferences = getUserPreferences(user);
 
     if (preferences.defaultRecipeStatus) {
@@ -21,6 +22,8 @@ if (user) {
     }
 
     async function loadRecipes() {
+        renderLoadingState(listContainer, { count: 4, type: "table" });
+
         const query = new URLSearchParams({
             q: document.getElementById("search").value,
             status: document.getElementById("statusFilter").value
@@ -37,8 +40,11 @@ if (user) {
         const rejectedCount = response.items.filter((item) => item.approvalState === "rejected").length;
 
         listContainer.innerHTML = `
-            <div class="toolbar" style="margin-bottom: 16px;">
-                <div class="subtle">Showing ${response.items.length} recipes</div>
+            <div class="summary-banner">
+                <div>
+                    <strong>Showing ${response.items.length} recipes</strong>
+                    <div class="subtle">${query.get("q") || query.get("status") ? "Current filters are applied to the library view." : "Browse the current controlled recipe library for your role."}</div>
+                </div>
                 <div class="recipe-meta">
                     <span class="tag success">Approved ${approvedCount}</span>
                     <span class="tag pending">Pending ${pendingCount}</span>
@@ -84,6 +90,12 @@ if (user) {
 
     form?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        await loadRecipes();
+    });
+
+    resetFiltersButton?.addEventListener("click", async () => {
+        document.getElementById("search").value = "";
+        document.getElementById("statusFilter").value = preferences.defaultRecipeStatus || "";
         await loadRecipes();
     });
 
