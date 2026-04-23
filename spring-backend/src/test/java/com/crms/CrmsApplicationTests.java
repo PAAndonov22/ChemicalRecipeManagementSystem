@@ -9,6 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -61,6 +62,12 @@ class CrmsApplicationTests {
 
         assertEquals(409, exception.getStatus());
         assertTrue(exception.getMessage().contains("already registered"));
+    }
+
+    private MockHttpServletRequest bearerRequest(String token) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + token);
+        return request;
     }
 
 }
