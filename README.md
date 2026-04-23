@@ -1,14 +1,15 @@
 # Chemical Recipe Management System
 
-A full-stack chemical recipe management platform built with a C++ REST API, SQLite, and a plain HTML/CSS/JavaScript frontend.
+A full-stack chemical recipe management platform built with a Spring Boot REST API, SQLite, and a plain HTML/CSS/JavaScript frontend.
 
 ## Stack
 
-- Backend: C++17
-- REST layer: `cpp-httplib`
+- Backend: Java 21
+- Framework: Spring Boot
+- Data access: Spring JDBC
 - Database: SQLite
 - Frontend: HTML, CSS, JavaScript
-- Build system: CMake
+- Build system: Maven Wrapper
 
 ## Implemented capabilities
 
@@ -34,16 +35,19 @@ A full-stack chemical recipe management platform built with a C++ REST API, SQLi
 ## Project structure
 
 ```text
-backend/
+spring-backend/
   src/
-    controllers/      HTTP route handlers
-    services/         business rules and validation
-    repositories/     SQLite data access
-    models/           domain DTOs and view models
-    database/         connection and migrations
-    security/         password hashing and token generation
-    utils/            shared helpers
-  third_party/        vendored httplib, json, picosha2, sqlite
+    main/java/com/crms/
+      config/         Spring configuration and static-file wiring
+      controller/     REST endpoints
+      db/             schema and seed startup logic
+      model/          domain records
+      repository/     SQLite access with Spring JDBC
+      service/        business rules and RBAC
+      util/           hashing, tokens, validation, and errors
+    main/resources/
+      application.properties
+  mvnw.cmd            self-contained Maven wrapper
 frontend/
   assets/
     css/
@@ -53,6 +57,7 @@ frontend/
       services/
   *.html              standalone application pages
 scripts/
+  run-spring-backend.ps1
   smoke-test.ps1      quick API verification
 data/
   crms.db             generated SQLite database
@@ -98,30 +103,37 @@ The application uses SQLite only.
 
 ### 1. Prerequisites
 
-Install a C++17-capable toolchain and CMake 3.20+.
+Install a Java 21 JDK.
 
-Examples:
+On Windows, Temurin 21 works well and is what this project was verified with.
 
-- Windows: Visual Studio Build Tools with the C++ workload, or Visual Studio with MSVC.
-- Linux: `g++` or `clang++` plus `cmake`.
-- macOS: Xcode command line tools plus `cmake`.
+### 2. Build and test
 
-### 2. Configure and build
+From the repo root:
 
-```bash
-cmake -S . -B build
-cmake --build build --config Release
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\spring-backend\mvnw.cmd -f .\spring-backend\pom.xml test
 ```
 
 ### 3. Run the server
 
-```bash
-./build/backend/Release/crms_server
+Simplest option from the repo root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-spring-backend.ps1
 ```
 
-If your generator places the executable elsewhere, run the produced `crms_server` binary from the `build` directory.
+Or run it manually:
 
-The application serves:
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\spring-backend\mvnw.cmd -f .\spring-backend\pom.xml spring-boot:run
+```
+
+The Spring Boot application serves:
 
 - API: `http://localhost:8080/api`
 - Frontend: `http://localhost:8080`
@@ -268,6 +280,6 @@ Additional manual API checks used during development:
 
 ## Notes
 
-- The server mounts `frontend/` directly, so the same C++ process serves both API and UI.
+- The Spring Boot server mounts `frontend/` directly, so the same Java process serves both API and UI.
 - SQLite data is stored in `data/crms.db`.
-- Third-party dependencies are vendored to keep setup lightweight.
+- The active backend is the Spring Boot app in `spring-backend/`.
