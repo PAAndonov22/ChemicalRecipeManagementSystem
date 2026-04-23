@@ -89,6 +89,31 @@ class CrmsApplicationTests {
         assertTrue(exception.getMessage().contains("own admin role"));
     }
 
+    @Test
+    void adminCannotDeactivateLastActiveAdmin() {
+        Map<String, Object> login = authService.login(Map.of(
+            "identifier", "admin@crms.local",
+            "password", "Admin123!"
+        ), "127.0.0.1");
+
+        Map<String, Object> user = castMap(login.get("user"));
+        int adminId = ((Number) user.get("id")).intValue();
+
+        MockHttpServletRequest request = bearerRequest((String) login.get("token"));
+        ApiException exception = assertThrows(ApiException.class, () -> authService.updateAdminUser(
+            adminId,
+            request,
+            Map.of(
+                "roleName", "Admin",
+                "isActive", false
+            ),
+            "127.0.0.1"
+        ));
+
+        assertEquals(400, exception.getStatus());
+        assertTrue(exception.getMessage().contains("active admin"));
+    }
+
     private MockHttpServletRequest bearerRequest(String token) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + token);
