@@ -340,7 +340,7 @@ public class AuthService {
     }
 
     private String validateTheme(Map<String, Object> payload) {
-        return ValidationUtils.requireEnum(ValidationUtils.requiredString(payload, "theme", 4, 10), Set.of("light", "dark"), "theme");
+        return ValidationUtils.requireEnum(ValidationUtils.requiredString(payload, "theme", 4, 10), Set.of("light", "dark", "onyx"), "theme");
     }
 
     private String validateDensity(Map<String, Object> payload) {
