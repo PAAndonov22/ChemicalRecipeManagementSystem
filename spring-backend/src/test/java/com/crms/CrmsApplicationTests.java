@@ -191,6 +191,29 @@ class CrmsApplicationTests {
         assertTrue(exception.getMessage().contains("invalid or expired"));
     }
 
+    @Test
+    void settingsAcceptOnyxTheme() {
+        Map<String, Object> login = authService.login(Map.of(
+            "identifier", "chemist@crms.local",
+            "password", "Chemist123!"
+        ), "127.0.0.1");
+
+        MockHttpServletRequest request = bearerRequest((String) login.get("token"));
+        Map<String, Object> response = authService.updateSettings(
+            request,
+            Map.of(
+                "theme", "onyx",
+                "density", "comfortable",
+                "defaultRecipeStatus", "",
+                "landingPage", "dashboard"
+            ),
+            "127.0.0.1"
+        );
+
+        Map<String, Object> preferences = castMap(response.get("preferences"));
+        assertEquals("onyx", preferences.get("theme"));
+    }
+
     private MockHttpServletRequest bearerRequest(String token) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + token);
