@@ -204,6 +204,19 @@ public class AuthRepository {
         );
     }
 
+    public int countActiveAdmins() {
+        Integer count = jdbcTemplate.queryForObject(
+            """
+            SELECT COUNT(*)
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            WHERE r.name = 'Admin' AND u.is_active = 1
+            """,
+            Integer.class
+        );
+        return count == null ? 0 : count;
+    }
+
     public void updateUserProfile(int userId, String username, String email) {
         jdbcTemplate.update("UPDATE users SET username = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", username, email, userId);
     }
