@@ -19,6 +19,40 @@
                 <div id="user-chip" class="user-chip"></div>
             </header>
             <main class="page-grid">
+                <section class="card">
+                    <form id="report-sort-form" class="inline-form">
+                        <div class="field">
+                            <label for="statusSort">Status Sort</label>
+                            <select id="statusSort">
+                                <option value="name_asc">Status Name A-Z</option>
+                                <option value="name_desc">Status Name Z-A</option>
+                                <option value="count_desc">Largest Count First</option>
+                                <option value="count_asc">Smallest Count First</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="ingredientSort">Ingredient Usage Sort</label>
+                            <select id="ingredientSort">
+                                <option value="usage_desc">Most Used First</option>
+                                <option value="usage_asc">Least Used First</option>
+                                <option value="name_asc">Ingredient Name A-Z</option>
+                                <option value="name_desc">Ingredient Name Z-A</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="activitySort">Recent Activity Sort</label>
+                            <select id="activitySort">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="action_asc">Action A-Z</option>
+                                <option value="action_desc">Action Z-A</option>
+                            </select>
+                        </div>
+                        <div class="button-row">
+                            <button class="button" type="submit">Apply Sorting</button>
+                        </div>
+                    </form>
+                </section>
                 <section id="status-grid" class="cards-grid"></section>
                 <section class="card">
                     <div class="section-title" style="margin-bottom: 12px;">Ingredient Usage</div>
