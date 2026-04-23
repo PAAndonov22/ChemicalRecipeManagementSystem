@@ -156,6 +156,14 @@ public class AuthService {
             throw new ApiException(400, "You cannot remove your own admin role.");
         }
 
+        AuthenticatedUser targetUser = repository.findUserById(userId)
+            .orElseThrow(() -> new ApiException(404, "User not found."));
+        if ("Admin".equals(targetUser.roleName())
+            && (!isActive || !"Admin".equals(roleName))
+            && repository.countActiveAdmins() <= 1) {
+            throw new ApiException(400, "At least one active admin account must remain.");
+        }
+
         repository.updateUserRoleAndStatus(userId, roleName, isActive);
         if (!isActive) {
             repository.revokeAllSessionsForUser(userId);
