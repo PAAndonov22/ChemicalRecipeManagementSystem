@@ -87,6 +87,14 @@ public final class ValidationUtils {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
+    public static String requiredEmail(Map<String, Object> payload, String field) {
+        String email = normalizeEmail(requiredString(payload, field, 5, 120));
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new ApiException(400, "Field '" + field + "' must be a valid email address.");
+        }
+        return email;
+    }
+
     public static String optionalQuery(HttpServletRequest request, String name) {
         String value = request.getParameter(name);
         return value == null ? "" : value.trim();
