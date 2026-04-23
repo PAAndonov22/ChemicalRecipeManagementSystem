@@ -164,6 +164,42 @@ public class DatabaseMigrationService implements ApplicationRunner {
         execute("CREATE INDEX IF NOT EXISTS idx_shared_recipes_user_id ON shared_recipes(shared_with_user_id)");
         execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)");
         execute("CREATE INDEX IF NOT EXISTS idx_user_sessions_token_hash ON user_sessions(token_hash)");
+        upgradeUserPreferencesThemeConstraint();
+    }
+
+    private void upgradeUserPreferencesThemeConstraint() {
+        String tableSql = jdbcTemplate.query(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'user_preferences'",
+            (resultSet, rowNum) -> resultSet.getString(1)
+        ).stream().findFirst().orElse("");
+
+        if (tableSql.contains("'onyx'") || tableSql.isBlank()) {
+            return;
+        }
+
+        execute("ALTER TABLE user_preferences RENAME TO user_preferences_legacy");
+        execute("""
+            CREATE TABLE user_preferences (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark', 'onyx')),
+                density TEXT NOT NULL DEFAULT 'comfortable' CHECK(density IN ('comfortable', 'compact')),
+                default_recipe_status TEXT NOT NULL DEFAULT '' CHECK(default_recipe_status IN ('', 'draft', 'approved', 'archived')),
+                landing_page TEXT NOT NULL DEFAULT 'dashboard' CHECK(landing_page IN ('dashboard', 'recipes', 'reports', 'settings', 'admin-users')),
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """);
+        execute("""
+            INSERT INTO user_preferences (user_id, theme, density, default_recipe_status, landing_page, updated_at)
+            SELECT
+                user_id,
+                CASE WHEN theme IN ('light', 'dark', 'onyx') THEN theme ELSE 'light' END,
+                density,
+                default_recipe_status,
+                landing_page,
+                updated_at
+            FROM user_preferences_legacy
+            """);
+        execute("DROP TABLE user_preferences_legacy");
     }
 
     private void seedRoles() {
