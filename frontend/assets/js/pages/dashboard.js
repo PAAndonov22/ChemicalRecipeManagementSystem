@@ -1,5 +1,5 @@
 import { apiRequest } from "../services/api.js";
-import { mountAppLayout, renderEmptyState } from "../components/layout.js";
+import { mountAppLayout, renderEmptyState, renderLoadingState } from "../components/layout.js";
 import { requireSession } from "../services/session.js";
 
 const user = await requireSession();
@@ -15,6 +15,10 @@ if (user) {
     const recentActivity = document.getElementById("recent-activity");
     const ownerTable = document.getElementById("owner-table");
 
+    renderLoadingState(metrics, { count: 4, type: "metric-grid" });
+    renderLoadingState(recentActivity, { count: 3 });
+    renderLoadingState(ownerTable, { count: 4, type: "table" });
+
     const report = await apiRequest("/reports/summary");
 
     metrics.innerHTML = `
@@ -27,7 +31,12 @@ if (user) {
     if (!report.recentActivity.length) {
         renderEmptyState(recentActivity, "Recent activity will appear here once people start using the system.");
     } else {
-        recentActivity.innerHTML = report.recentActivity
+        recentActivity.innerHTML = `
+            <div class="page-intro-card">
+                <strong>Live audit pulse</strong>
+                <div class="subtle">The latest controlled actions are grouped here so admins and chemists can review operational movement quickly.</div>
+            </div>
+            ${report.recentActivity
             .map((item) => `
                 <div class="panel">
                     <div class="recipe-meta">
@@ -39,7 +48,7 @@ if (user) {
                     <p>${item.details}</p>
                 </div>
             `)
-            .join("");
+            .join("")}`;
     }
 
     if (!report.recipesByOwner.length) {
