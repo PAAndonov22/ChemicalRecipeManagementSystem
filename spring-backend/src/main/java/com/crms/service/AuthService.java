@@ -181,7 +181,7 @@ public class AuthService {
     public Map<String, Object> updateProfile(HttpServletRequest request, Map<String, Object> payload, String ipAddress) {
         AuthenticatedUser currentUser = requireUser(request, List.of());
         String username = validateUsername(payload, "username");
-        String email = ValidationUtils.normalizeEmail(ValidationUtils.requiredString(payload, "email", 5, 120));
+        String email = ValidationUtils.requiredEmail(payload, "email");
 
         if (repository.usernameExistsForOtherUser(username, currentUser.id())) {
             throw new ApiException(409, "Username is already in use.");
