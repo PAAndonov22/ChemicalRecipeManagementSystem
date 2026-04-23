@@ -5,6 +5,9 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import com.crms.repository.ReportRepository;
+import com.crms.util.ValidationUtils;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class ReportService {
@@ -14,7 +17,11 @@ public class ReportService {
         this.repository = repository;
     }
 
-    public Map<String, Object> getSummary() {
-        return repository.buildSummary();
+    public Map<String, Object> getSummary(HttpServletRequest request) {
+        return repository.buildSummary(
+            ValidationUtils.optionalQuery(request, "statusSort"),
+            ValidationUtils.optionalQuery(request, "ingredientSort"),
+            ValidationUtils.optionalQuery(request, "activitySort")
+        );
     }
 }
