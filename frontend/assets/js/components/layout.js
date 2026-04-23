@@ -11,6 +11,86 @@ const navItems = [
     { key: "settings", label: "Settings", href: "/settings.html", roles: ["Admin", "Chemist", "Technician"] }
 ];
 
+const MOBILE_MEDIA_QUERY = "(max-width: 980px)";
+
+function ensureSidebarChrome() {
+    let overlay = document.getElementById("sidebar-overlay");
+    if (!overlay) {
+        overlay = document.createElement("button");
+        overlay.id = "sidebar-overlay";
+        overlay.className = "sidebar-overlay";
+        overlay.type = "button";
+        overlay.setAttribute("aria-label", "Close navigation");
+        document.body.appendChild(overlay);
+    }
+
+    const pageTitle = document.querySelector(".page-title");
+    if (pageTitle && !pageTitle.querySelector(".page-title-row")) {
+        const row = document.createElement("div");
+        row.className = "page-title-row";
+
+        const toggle = document.createElement("button");
+        toggle.id = "sidebar-toggle";
+        toggle.className = "sidebar-toggle";
+        toggle.type = "button";
+        toggle.setAttribute("aria-label", "Open navigation");
+        toggle.innerHTML = `
+            <span class="sidebar-toggle-lines" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+        `;
+
+        const heading = pageTitle.querySelector("h1");
+        if (heading) {
+            heading.parentNode?.insertBefore(row, heading);
+            row.append(toggle, heading);
+        }
+    }
+
+    return overlay;
+}
+
+function isMobileLayout() {
+    return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+}
+
+function setSidebarOpen(sidebar, isOpen) {
+    sidebar?.classList.toggle("sidebar-open", isOpen);
+    document.body.classList.toggle("sidebar-open", isOpen);
+}
+
+function wireSidebarInteractions(sidebar) {
+    const overlay = ensureSidebarChrome();
+    const toggle = document.getElementById("sidebar-toggle");
+
+    overlay.onclick = () => setSidebarOpen(sidebar, false);
+    toggle?.addEventListener("click", () => {
+        setSidebarOpen(sidebar, !sidebar.classList.contains("sidebar-open"));
+    });
+
+    sidebar.querySelectorAll(".sidebar-link").forEach((link) => {
+        link.addEventListener("click", () => {
+            if (isMobileLayout()) {
+                setSidebarOpen(sidebar, false);
+            }
+        });
+    });
+
+    window.addEventListener("resize", () => {
+        if (!isMobileLayout()) {
+            setSidebarOpen(sidebar, false);
+        }
+    }, { passive: true });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            setSidebarOpen(sidebar, false);
+        }
+    });
+}
+
 export function setStatus(element, message, type = "info") {
     if (!element) {
         return;
@@ -85,8 +165,60 @@ export function mountAppLayout({ user, activePage, title, subtitle }) {
             redirectToLogin();
         }
     });
+
+    wireSidebarInteractions(sidebar);
 }
 
 export function renderEmptyState(container, message) {
     container.innerHTML = `<div class="empty-state">${message}</div>`;
+}
+
+export function renderLoadingState(container, {
+    count = 1,
+    type = "panel"
+} = {}) {
+    if (!container) {
+        return;
+    }
+
+    if (type === "metric-grid") {
+        container.innerHTML = Array.from({ length: count }, () => `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-line skeleton-title"></div>
+                <div class="skeleton skeleton-metric"></div>
+                <div class="skeleton skeleton-line skeleton-copy"></div>
+                <div class="skeleton skeleton-line skeleton-copy short"></div>
+            </div>
+        `).join("");
+        return;
+    }
+
+    if (type === "table") {
+        container.innerHTML = `
+            <div class="skeleton-table">
+                ${Array.from({ length: count }, () => `
+                    <div class="skeleton-table-row">
+                        <div class="skeleton skeleton-line skeleton-copy"></div>
+                        <div class="skeleton skeleton-line skeleton-copy short"></div>
+                        <div class="skeleton skeleton-line skeleton-copy short"></div>
+                        <div class="skeleton skeleton-line skeleton-copy short"></div>
+                    </div>
+                `).join("")}
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="loading-stack">
+            ${Array.from({ length: count }, () => `
+                <div class="${type === "card" ? "skeleton-card" : "skeleton-panel"}">
+                    <div class="skeleton skeleton-line skeleton-title"></div>
+                    <div class="skeleton skeleton-line skeleton-copy"></div>
+                    <div class="skeleton skeleton-line skeleton-copy"></div>
+                    <div class="skeleton skeleton-line skeleton-copy short"></div>
+                </div>
+            `).join("")}
+        </div>
+    `;
 }
