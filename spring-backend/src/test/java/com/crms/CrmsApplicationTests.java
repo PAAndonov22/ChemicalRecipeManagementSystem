@@ -114,6 +114,27 @@ class CrmsApplicationTests {
         assertTrue(exception.getMessage().contains("active admin"));
     }
 
+    @Test
+    void profileUpdateRejectsInvalidEmailAddress() {
+        Map<String, Object> login = authService.login(Map.of(
+            "identifier", "user@crms.local",
+            "password", "User123!"
+        ), "127.0.0.1");
+
+        MockHttpServletRequest request = bearerRequest((String) login.get("token"));
+        ApiException exception = assertThrows(ApiException.class, () -> authService.updateProfile(
+            request,
+            Map.of(
+                "username", "useraccount",
+                "email", "broken-email"
+            ),
+            "127.0.0.1"
+        ));
+
+        assertEquals(400, exception.getStatus());
+        assertTrue(exception.getMessage().contains("valid email address"));
+    }
+
     private MockHttpServletRequest bearerRequest(String token) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + token);
