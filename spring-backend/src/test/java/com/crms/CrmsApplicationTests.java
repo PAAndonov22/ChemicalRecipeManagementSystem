@@ -47,4 +47,20 @@ class CrmsApplicationTests {
         assertTrue(exception.getMessage().contains("valid email address"));
     }
 
+    @Test
+    void registerNormalizesEmailBeforeCheckingDuplicates() {
+        ApiException exception = assertThrows(ApiException.class, () -> authService.registerUser(
+            Map.of(
+                "username", "duplicateAdminAlias",
+                "email", "ADMIN@CRMS.LOCAL",
+                "password", "ValidPass123",
+                "roleName", "Technician"
+            ),
+            "127.0.0.1"
+        ));
+
+        assertEquals(409, exception.getStatus());
+        assertTrue(exception.getMessage().contains("already registered"));
+    }
+
 }
