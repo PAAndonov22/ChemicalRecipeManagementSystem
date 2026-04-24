@@ -47,8 +47,8 @@ public class AuthService {
         String email = ValidationUtils.requiredEmail(payload, "email");
         String password = validatePassword(payload, "password");
 
-        String roleName = payload.get("roleName") instanceof String value ? value.trim() : "Technician";
-        roleName = ValidationUtils.requireEnum(roleName, Set.of("Chemist", "Technician"), "roleName");
+        String roleName = payload.get("roleName") instanceof String value ? value.trim() : "User";
+        roleName = ValidationUtils.requireEnum(roleName, Set.of("Chemist", "Technician", "User"), "roleName");
 
         if (repository.usernameExists(username)) {
             throw new ApiException(409, "Username is already in use.");
@@ -146,7 +146,7 @@ public class AuthService {
 
     public Map<String, Object> updateAdminUser(int userId, HttpServletRequest request, Map<String, Object> payload, String ipAddress) {
         AuthenticatedUser actor = requireUser(request, List.of("Admin"));
-        String roleName = ValidationUtils.requireEnum(ValidationUtils.requiredString(payload, "roleName", 5, 20), Set.of("Admin", "Chemist", "Technician"), "roleName");
+        String roleName = ValidationUtils.requireEnum(ValidationUtils.requiredString(payload, "roleName", 4, 20), Set.of("Admin", "Chemist", "Technician", "User"), "roleName");
         boolean isActive = ValidationUtils.optionalBoolean(payload, "isActive", true);
 
         AuthenticatedUser targetUser = repository.findUserById(userId)

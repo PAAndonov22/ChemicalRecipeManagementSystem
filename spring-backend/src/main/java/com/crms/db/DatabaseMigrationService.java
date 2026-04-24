@@ -206,6 +206,7 @@ public class DatabaseMigrationService implements ApplicationRunner {
         jdbcTemplate.update("INSERT OR IGNORE INTO roles (name, description) VALUES ('Admin', 'Full administrative access')");
         jdbcTemplate.update("INSERT OR IGNORE INTO roles (name, description) VALUES ('Chemist', 'Can create, edit, and share recipes')");
         jdbcTemplate.update("INSERT OR IGNORE INTO roles (name, description) VALUES ('Technician', 'Read-only access to shared recipes and reports')");
+        jdbcTemplate.update("INSERT OR IGNORE INTO roles (name, description) VALUES ('User', 'Read-only access to approved medicine information and reports')");
     }
 
     private SeedUsers seedUsers() {
@@ -269,7 +270,7 @@ public class DatabaseMigrationService implements ApplicationRunner {
                 UPDATE users
                 SET username = 'user',
                     email = 'user@crms.local',
-                    role_id = (SELECT id FROM roles WHERE name = 'Technician'),
+                    role_id = (SELECT id FROM roles WHERE name = 'User'),
                     is_active = 1,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -279,7 +280,7 @@ public class DatabaseMigrationService implements ApplicationRunner {
             return legacyId;
         }
 
-        return ensureUser("user", "user@crms.local", "User123!", "Technician");
+        return ensureUser("user", "user@crms.local", "User123!", "User");
     }
 
     private void ensurePreferences(int... userIds) {
