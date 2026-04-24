@@ -67,7 +67,7 @@ if (user) {
 } else {
     if (actions) {
         actions.innerHTML = `
-            <a class="button" href="#intro-identifier">Sign In Below</a>
+            <a class="button" href="/login.html">Open Login</a>
             <a class="button-secondary" href="/register.html">Create Account</a>
         `;
     }
