@@ -25,7 +25,7 @@ public class ReportController {
 
     @GetMapping("/summary")
     public Map<String, Object> summary(HttpServletRequest request) {
-        authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return reportService.getSummary(request);
     }
 }
