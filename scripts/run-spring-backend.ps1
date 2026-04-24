@@ -28,6 +28,21 @@ if (-not (Test-Path $javaExe)) {
 $env:JAVA_HOME = $JavaHome
 $env:Path = "$JavaHome\bin;$env:Path"
 
+Push-Location (Join-Path $PSScriptRoot "..\frontend")
+try {
+    if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
+        throw "npm.cmd was not found. Install Node.js first."
+    }
+
+    if (-not (Test-Path ".\node_modules")) {
+        & npm.cmd install
+    }
+
+    & npm.cmd run build
+} finally {
+    Pop-Location
+}
+
 Push-Location (Join-Path $PSScriptRoot "..\spring-backend")
 try {
     .\mvnw.cmd spring-boot:run

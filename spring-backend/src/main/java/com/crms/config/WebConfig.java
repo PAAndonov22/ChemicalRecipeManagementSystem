@@ -10,6 +10,20 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+    private static final String[] SPA_ROUTES = {
+        "/login.html",
+        "/register.html",
+        "/dashboard.html",
+        "/recipes.html",
+        "/recipe-details.html",
+        "/recipe-editor.html",
+        "/version-history.html",
+        "/reports.html",
+        "/settings.html",
+        "/admin-users.html",
+        "/audit-logs.html"
+    };
+
     private final String frontendLocation;
 
     public WebConfig(@Value("${crms.frontend.path}") String frontendPath) {
@@ -18,7 +32,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addRedirectViewController("/", "/index.html");
+        registry.addViewController("/").setViewName("forward:/index.html");
+        for (String route : SPA_ROUTES) {
+            registry.addViewController(route).setViewName("forward:/index.html");
+        }
     }
 
     @Override
