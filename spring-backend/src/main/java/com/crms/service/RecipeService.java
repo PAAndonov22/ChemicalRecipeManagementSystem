@@ -276,7 +276,7 @@ public class RecipeService {
     }
 
     private boolean shouldHidePreparationDetails(AuthenticatedUser actor) {
-        return "Technician".equals(actor.roleName());
+        return "Technician".equals(actor.roleName()) || "User".equals(actor.roleName());
     }
 
     private String ingredientKey(RecipeIngredientView ingredient) {

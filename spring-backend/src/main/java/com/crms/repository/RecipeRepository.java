@@ -51,7 +51,7 @@ public class RecipeRepository {
 
     public List<RecipeSummary> listAccessibleRecipes(AuthenticatedUser actor, String search, String statusFilter) {
         boolean admin = isAdmin(actor);
-        boolean technician = isTechnician(actor);
+        boolean readOnlyViewer = isReadOnlyViewer(actor);
         StringBuilder sql = new StringBuilder(
             """
             SELECT DISTINCT
@@ -59,7 +59,7 @@ public class RecipeRepository {
                 owner.username, r.updated_at, COALESCE(rv.version_number, 0),
                 CASE
                     WHEN ? = 1 THEN 1
-                    WHEN ? = 'Technician' THEN 0
+                    WHEN ? IN ('Technician', 'User') THEN 0
                     WHEN r.owner_id = ? THEN 1
                     WHEN sr.permission_level = 'edit' THEN 1
                     ELSE 0
@@ -94,7 +94,7 @@ public class RecipeRepository {
             sql.append(" AND (r.owner_id = ? OR sr.id IS NOT NULL)");
             args.add(actor.id());
         }
-        if (technician) {
+        if (readOnlyViewer) {
             sql.append(" AND r.status = 'approved' AND COALESCE(r.approval_state, 'draft') = 'approved'");
         }
         sql.append(" ORDER BY r.updated_at DESC, r.id DESC");
@@ -293,7 +293,7 @@ public class RecipeRepository {
                 r.id, r.owner_id, owner.username, r.status, COALESCE(r.approval_state, 'draft'),
                 CASE
                     WHEN ? = 'Admin' THEN 1
-                    WHEN ? = 'Technician' THEN 0
+                    WHEN ? IN ('Technician', 'User') THEN 0
                     WHEN r.owner_id = ? THEN 1
                     WHEN sr.permission_level = 'edit' THEN 1
                     ELSE 0
@@ -301,7 +301,7 @@ public class RecipeRepository {
                 CASE
                     WHEN ? = 'Admin' THEN 1
                     WHEN r.owner_id = ? THEN 1
-                    WHEN ? = 'Technician' AND (r.status <> 'approved' OR COALESCE(r.approval_state, 'draft') <> 'approved') THEN 0
+                    WHEN ? IN ('Technician', 'User') AND (r.status <> 'approved' OR COALESCE(r.approval_state, 'draft') <> 'approved') THEN 0
                     WHEN sr.id IS NOT NULL THEN 1
                     ELSE 0
                 END AS can_view,
@@ -495,8 +495,8 @@ public class RecipeRepository {
         return "Admin".equals(actor.roleName());
     }
 
-    private boolean isTechnician(AuthenticatedUser actor) {
-        return "Technician".equals(actor.roleName());
+    private boolean isReadOnlyViewer(AuthenticatedUser actor) {
+        return "Technician".equals(actor.roleName()) || "User".equals(actor.roleName());
     }
 
     private String normalizeWorkflowStatus(String status) {
