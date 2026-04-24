@@ -3,177 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="/assets/js/theme-init.js"></script>
     <title>CRMS</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <script>
+        try {
+            const raw = localStorage.getItem("crms_user");
+            const user = raw ? JSON.parse(raw) : null;
+            const preferences = user && user.preferences ? user.preferences : {};
+            document.documentElement.dataset.theme = ["light", "dark", "onyx"].includes(preferences.theme) ? preferences.theme : "light";
+            document.documentElement.dataset.density = preferences.density === "compact" ? "compact" : "comfortable";
+        } catch {
+            document.documentElement.dataset.theme = "light";
+            document.documentElement.dataset.density = "comfortable";
+        }
+    </script>
 </head>
-<body class="landing-page">
-    <div class="intro-shell">
-        <header class="intro-header">
-            <a class="intro-brand" href="/index.html">
-                <img class="intro-brand-logo" src="/assets/img/crms-logo.png" alt="CRMS logo">
-                <div class="intro-brand-copy">
-                    <div class="intro-brand-name">CRMS</div>
-                    <div class="intro-brand-subtitle">Chemical Recipe Management System</div>
-                </div>
-            </a>
-            <nav class="intro-nav">
-                <a href="/login.html">Login</a>
-                <a href="/register.html">Register</a>
-            </nav>
-        </header>
-
-        <main class="intro-main">
-            <section class="intro-hero">
-                <div class="intro-copy">
-                    <div class="intro-eyebrow">Controlled medicine workflow</div>
-                    <h1>Keep recipes clear, traceable, and easy to review.</h1>
-                    <p class="intro-lede">
-                        CRMS helps labs and student projects manage medicine recipes with version history,
-                        approval tracking, ingredient visibility, sharing, and audit-ready records in one place.
-                    </p>
-
-                    <div id="intro-actions" class="button-row intro-action-row"></div>
-
-                    <div class="intro-note">
-                        <strong id="intro-state-title">Ready to sign in</strong>
-                        <span id="intro-state-copy">Use the sign-in panel to continue, or create a new account to explore the system.</span>
-                    </div>
-
-                    <div class="intro-highlights" aria-label="Platform highlights">
-                        <div class="intro-highlight">
-                            <strong>Version history</strong>
-                            <span>Track recipe changes with less guesswork.</span>
-                        </div>
-                        <div class="intro-highlight">
-                            <strong>Approval flow</strong>
-                            <span>Keep review and release status visible.</span>
-                        </div>
-                        <div class="intro-highlight">
-                            <strong>Audit ready</strong>
-                            <span>Surface important activity without clutter.</span>
-                        </div>
-                    </div>
-
-                    <section id="intro-panel" class="intro-login-card">
-                        <div class="intro-card-header">
-                            <img class="intro-card-logo" src="/assets/img/crms-logo.png" alt="CRMS logo">
-                            <div>
-                                <h2 id="intro-panel-title">Sign In</h2>
-                                <p id="intro-panel-subtitle" class="subtle">Access your dashboard, recipes, reports, and settings.</p>
-                            </div>
-                        </div>
-                        <div id="intro-status" class="status"></div>
-                        <form id="intro-login-form" class="form-grid">
-                            <div class="field">
-                                <label for="intro-identifier">Email or Username</label>
-                                <input id="intro-identifier" placeholder="admin@crms.local" required>
-                            </div>
-                            <div class="field">
-                                <label for="intro-password">Password</label>
-                                <input id="intro-password" type="password" placeholder="Enter your password" required>
-                            </div>
-                            <label class="action-cluster intro-remember">
-                                <input id="intro-remember" type="checkbox">
-                                <span>Keep me signed in on this device</span>
-                            </label>
-                            <button class="button" type="submit">Log In</button>
-                        </form>
-                        <div class="intro-form-foot">
-                            <span>Need an account?</span>
-                            <a href="/register.html">Create one here</a>
-                        </div>
-                        <div class="intro-demo">
-                            <strong>Demo login</strong>
-                            <span>`admin@crms.local` / `Admin123!`</span>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="intro-visual" aria-hidden="true">
-                    <div class="intro-visual-glow intro-visual-glow-a"></div>
-                    <div class="intro-visual-glow intro-visual-glow-b"></div>
-                    <div class="intro-visual-frame">
-                        <div class="intro-visual-ring"></div>
-                        <img class="intro-hero-image" src="/assets/img/crms-logo.png" alt="CRMS logo">
-                    </div>
-                    <div class="intro-visual-note">
-                        <strong>Focused workspace</strong>
-                        <span>Enter the system through a cleaner dashboard preview with balanced spacing and clearer visual hierarchy.</span>
-                    </div>
-                    <div class="intro-visual-caption">
-                        <div class="intro-visual-chip">Controlled Versions</div>
-                        <div class="intro-visual-chip">Approval Flow</div>
-                        <div class="intro-visual-chip">Audit Visibility</div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="intro-secondary">
-                <article class="intro-feature-panel">
-                    <div class="intro-section-heading">
-                        <span class="intro-section-kicker">Platform features</span>
-                        <h2>Everything needed for a cleaner medicine recipe workflow.</h2>
-                    </div>
-                    <div class="intro-feature-grid">
-                        <div class="intro-feature-card">
-                            <strong>Recipe control</strong>
-                            <span>Create, review, and organize versioned recipes without losing context.</span>
-                        </div>
-                        <div class="intro-feature-card">
-                            <strong>Ingredient clarity</strong>
-                            <span>Show exactly what is inside each medicine with a readable ingredient breakdown.</span>
-                        </div>
-                        <div class="intro-feature-card">
-                            <strong>Approval tracking</strong>
-                            <span>Surface release state, reviewer intent, and changes that matter.</span>
-                        </div>
-                        <div class="intro-feature-card">
-                            <strong>Role-based access</strong>
-                            <span>Keep technician and user views focused on approved, readable information.</span>
-                        </div>
-                    </div>
-                </article>
-
-                <aside class="intro-utility-panel">
-                    <div class="intro-section-heading">
-                        <span class="intro-section-kicker">Quick access</span>
-                        <h2>Jump straight into the parts people use most.</h2>
-                    </div>
-
-                    <div class="intro-link-list">
-                        <a class="intro-link-card" href="/recipes.html">
-                            <strong>Recipe library</strong>
-                            <span>Browse approved and shared medicines.</span>
-                        </a>
-                        <a class="intro-link-card" href="/reports.html">
-                            <strong>Reports</strong>
-                            <span>Review activity, usage, and status summaries.</span>
-                        </a>
-                        <a class="intro-link-card" href="/settings.html">
-                            <strong>Settings</strong>
-                            <span>Switch theme, update account details, and tune preferences.</span>
-                        </a>
-                    </div>
-
-                    <div class="intro-checklist">
-                        <div class="intro-check-item">
-                            <span class="intro-check-dot"></span>
-                            <span>Login directly from this page</span>
-                        </div>
-                        <div class="intro-check-item">
-                            <span class="intro-check-dot"></span>
-                            <span>Responsive two-column hero with smaller branding</span>
-                        </div>
-                        <div class="intro-check-item">
-                            <span class="intro-check-dot"></span>
-                            <span>Darker interface with cleaner visual hierarchy</span>
-                        </div>
-                    </div>
-                </aside>
-            </section>
-        </main>
-    </div>
-    <script type="module" src="/assets/js/pages/index.js"></script>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
