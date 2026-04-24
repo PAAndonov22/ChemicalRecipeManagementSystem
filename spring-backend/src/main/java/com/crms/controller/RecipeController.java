@@ -32,56 +32,56 @@ public class RecipeController {
 
     @GetMapping
     public Map<String, Object> listRecipes(HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.listRecipes(actor, request);
     }
 
     @GetMapping("/{recipeId}")
     public Map<String, Object> getRecipe(@PathVariable int recipeId, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.getRecipe(recipeId, actor);
     }
 
     @GetMapping("/{recipeId}/versions")
     public Map<String, Object> versions(@PathVariable int recipeId, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.getVersions(recipeId, actor);
     }
 
     @GetMapping("/{recipeId}/compare")
     public Map<String, Object> compare(@PathVariable int recipeId, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.compareVersions(recipeId, actor, request);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> create(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.createRecipe(actor, payload, request.getRemoteAddr());
     }
 
     @PutMapping("/{recipeId}")
     public Map<String, Object> update(@PathVariable int recipeId, @RequestBody Map<String, Object> payload, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.updateRecipe(recipeId, actor, payload, request.getRemoteAddr());
     }
 
     @PostMapping("/{recipeId}/share")
     public Map<String, Object> share(@PathVariable int recipeId, @RequestBody Map<String, Object> payload, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.shareRecipe(recipeId, actor, payload, request.getRemoteAddr());
     }
 
     @PostMapping("/{recipeId}/submit")
     public Map<String, Object> submit(@PathVariable int recipeId, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.submitForApproval(recipeId, actor, request.getRemoteAddr());
     }
 
     @PostMapping("/{recipeId}/review")
     public Map<String, Object> review(@PathVariable int recipeId, @RequestBody Map<String, Object> payload, HttpServletRequest request) {
-        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician"));
+        AuthenticatedUser actor = authService.requireUser(request, List.of("Admin", "Chemist", "Technician", "User"));
         return recipeService.reviewRecipe(recipeId, actor, payload, request.getRemoteAddr());
     }
 }
