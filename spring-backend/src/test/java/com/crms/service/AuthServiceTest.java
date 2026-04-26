@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.crms.model.DomainModels.AuthenticatedUser;
+import com.crms.model.DomainModels.SessionRecord;
 import com.crms.model.DomainModels.UserLoginRecord;
 import com.crms.model.DomainModels.UserPreferences;
 import com.crms.repository.AuthRepository;
@@ -157,6 +158,88 @@ class AuthServiceTest {
         verify(auditService).log(eq(Optional.of(7)), eq("USER_LOCKED"), eq("users"), eq(Optional.of(7)), eq("User account locked after repeated failed login attempts"), eq("127.0.0.1"));
     }
 
+    @Test
+    void logoutDeletesSessionAndLogsAudit() {
+        MockHttpServletRequest request = bearerRequest("raw-token");
+        SessionRecord session = sessionRecord(12, 7, "user", "user@crms.local", "User", true);
+
+        when(tokenService.hashToken("raw-token")).thenReturn("hashed-token");
+        when(repository.findSessionByTokenHash("hashed-token")).thenReturn(Optional.of(session));
+
+        Map<String, Object> response = authService.logout(request, "127.0.0.1");
+
+        assertEquals("Logout successful.", response.get("message"));
+        verify(repository).touchSession(12);
+        verify(repository).deleteSession("hashed-token");
+        verify(auditService).log(eq(Optional.of(7)), eq("USER_LOGOUT"), eq("users"), eq(Optional.of(7)), eq("User logged out"), eq("127.0.0.1"));
+    }
+
+    @Test
+    void updateSettingsRejectsAdminUsersLandingPageForRegularUsers() {
+        MockHttpServletRequest request = bearerRequest("raw-token");
+        SessionRecord session = sessionRecord(12, 7, "user", "user@crms.local", "User", true);
+
+        when(tokenService.hashToken("raw-token")).thenReturn("hashed-token");
+        when(repository.findSessionByTokenHash("hashed-token")).thenReturn(Optional.of(session));
+
+        ApiException exception = assertThrows(ApiException.class, () -> authService.updateSettings(
+            request,
+            Map.of(
+                "theme", "dark",
+                "density", "comfortable",
+                "landingPage", "admin-users",
+                "defaultRecipeStatus", "draft"
+            ),
+            "127.0.0.1"
+        ));
+
+        assertEquals(400, exception.getStatus());
+        assertTrue(exception.getMessage().contains("Only admins can set the admin users page as the start page."));
+        verify(repository).touchSession(12);
+    }
+
+    @Test
+    void changePasswordRejectsReusedPassword() {
+        MockHttpServletRequest request = bearerRequest("raw-token");
+        SessionRecord session = sessionRecord(12, 7, "user", "user@crms.local", "User", true);
+        UserLoginRecord login = loginRecord(7, "user@crms.local", "User", true, 0, "");
+
+        when(tokenService.hashToken("raw-token")).thenReturn("hashed-token");
+        when(repository.findSessionByTokenHash("hashed-token")).thenReturn(Optional.of(session));
+        when(repository.findUserLoginById(7)).thenReturn(Optional.of(login));
+        when(passwordHasher.verifyPassword("User123!", "user-salt", "user-hash")).thenReturn(true);
+
+        ApiException exception = assertThrows(ApiException.class, () -> authService.changePassword(
+            request,
+            Map.of(
+                "currentPassword", "User123!",
+                "newPassword", "User123!"
+            ),
+            "127.0.0.1"
+        ));
+
+        assertEquals(400, exception.getStatus());
+        assertTrue(exception.getMessage().contains("must be different from the current password."));
+        verify(repository).touchSession(12);
+    }
+
+    private SessionRecord sessionRecord(int sessionId, int userId, String username, String email, String roleName, boolean isActive) {
+        return new SessionRecord(
+            sessionId,
+            userId,
+            username,
+            email,
+            roleName,
+            isActive,
+            "2099-12-31T23:59:59",
+            new UserPreferences("light", "comfortable", "", "dashboard"),
+            false,
+            "Browser session",
+            "2026-04-25T21:00:00",
+            "2026-04-25T21:00:00"
+        );
+    }
+
     private UserLoginRecord loginRecord(int id, String email, String roleName, boolean isActive, int failedLoginAttempts, String lockedUntil) {
         return new UserLoginRecord(
             id,
@@ -186,5 +269,11 @@ class AuthServiceTest {
     @SuppressWarnings("unchecked")
     private Map<String, Object> castMap(Object value) {
         return (Map<String, Object>) value;
+    }
+
+    private MockHttpServletRequest bearerRequest(String token) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + token);
+        return request;
     }
 }
