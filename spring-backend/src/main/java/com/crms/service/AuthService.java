@@ -47,8 +47,11 @@ public class AuthService {
         String email = ValidationUtils.requiredEmail(payload, "email");
         String password = validatePassword(payload, "password");
 
-        String roleName = payload.get("roleName") instanceof String value ? value.trim() : "User";
-        roleName = ValidationUtils.requireEnum(roleName, Set.of("Chemist", "Technician", "User"), "roleName");
+        String requestedRoleName = payload.get("roleName") instanceof String value ? value.trim() : "";
+        if (!requestedRoleName.isBlank() && !"Technician".equals(requestedRoleName)) {
+            throw new ApiException(400, "Public registration is limited to Technician accounts.");
+        }
+        String roleName = "Technician";
 
         if (repository.usernameExists(username)) {
             throw new ApiException(409, "Username is already in use.");

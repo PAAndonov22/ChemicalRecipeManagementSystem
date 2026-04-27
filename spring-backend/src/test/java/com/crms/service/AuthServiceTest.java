@@ -81,6 +81,23 @@ class AuthServiceTest {
     }
 
     @Test
+    void registerUserRejectsNonTechnicianRoleRequests() {
+        ApiException exception = assertThrows(ApiException.class, () -> authService.registerUser(
+            Map.of(
+                "username", "new.tech",
+                "email", "new.tech@crms.local",
+                "password", "ValidPass123",
+                "roleName", "Chemist"
+            ),
+            "127.0.0.1"
+        ));
+
+        assertEquals(400, exception.getStatus());
+        assertTrue(exception.getMessage().contains("Public registration is limited to Technician accounts."));
+        verify(repository, never()).createUser(anyString(), anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
     void loginCreatesSessionAndReturnsToken() {
         UserLoginRecord user = loginRecord(7, "user@crms.local", "User", true, 0, "");
 
