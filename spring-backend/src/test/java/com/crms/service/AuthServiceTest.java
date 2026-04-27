@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,6 +26,7 @@ import com.crms.model.DomainModels.AuthenticatedUser;
 import com.crms.model.DomainModels.SessionRecord;
 import com.crms.model.DomainModels.UserLoginRecord;
 import com.crms.model.DomainModels.UserPreferences;
+import com.crms.model.DomainModels.UserSessionView;
 import com.crms.repository.AuthRepository;
 import com.crms.util.ApiException;
 import com.crms.util.PasswordHasher;
@@ -192,6 +194,29 @@ class AuthServiceTest {
     }
 
     @Test
+    void revokeOtherSessionsRemovesOnlyOtherSessionsAndReportsCount() {
+        MockHttpServletRequest request = bearerRequest("raw-token");
+        SessionRecord session = sessionRecord(12, 7, "user", "user@crms.local", "User", true);
+        when(tokenService.hashToken("raw-token")).thenReturn("hashed-token");
+        when(repository.findSessionByTokenHash("hashed-token")).thenReturn(Optional.of(session));
+        when(repository.listSessions(7, 12)).thenReturn(
+            List.of(
+                userSessionView(12, "Current browser", true, true),
+                userSessionView(20, "Tablet", true, false),
+                userSessionView(21, "Office PC", false, false)
+            )
+        );
+
+        Map<String, Object> response = authService.revokeOtherSessions(request, "127.0.0.1");
+
+        assertEquals("Other sessions revoked successfully.", response.get("message"));
+        assertEquals(2, ((Number) response.get("revokedCount")).intValue());
+        verify(repository).touchSession(12);
+        verify(repository).revokeAllSessionsForUser(7, 12);
+        verify(auditService).log(eq(Optional.of(7)), eq("USER_SESSIONS_REVOKED"), eq("user_sessions"), eq(Optional.of(7)), eq("User revoked all other active sessions"), eq("127.0.0.1"));
+    }
+
+    @Test
     void updateSettingsRejectsAdminUsersLandingPageForRegularUsers() {
         MockHttpServletRequest request = bearerRequest("raw-token");
         SessionRecord session = sessionRecord(12, 7, "user", "user@crms.local", "User", true);
@@ -280,6 +305,18 @@ class AuthServiceTest {
             roleName,
             true,
             new UserPreferences("light", "comfortable", "", "dashboard")
+        );
+    }
+
+    private UserSessionView userSessionView(int sessionId, String sessionLabel, boolean rememberMe, boolean current) {
+        return new UserSessionView(
+            sessionId,
+            sessionLabel,
+            rememberMe,
+            "2026-04-25T21:00:00",
+            "2026-04-25T21:00:00",
+            "2099-12-31T23:59:59",
+            current
         );
     }
 

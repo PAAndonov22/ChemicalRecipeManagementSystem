@@ -289,6 +289,14 @@ public class AuthService {
         return Map.of("message", "Session revoked successfully.");
     }
 
+    public Map<String, Object> revokeOtherSessions(HttpServletRequest request, String ipAddress) {
+        SessionRecord session = requireSessionRecord(request);
+        int revokedCount = Math.max(0, repository.listSessions(session.userId(), session.sessionId()).size() - 1);
+        repository.revokeAllSessionsForUser(session.userId(), session.sessionId());
+        auditService.log(Optional.of(session.userId()), "USER_SESSIONS_REVOKED", "user_sessions", Optional.of(session.userId()), "User revoked all other active sessions", ipAddress);
+        return Map.of("message", "Other sessions revoked successfully.", "revokedCount", revokedCount);
+    }
+
     public AuthenticatedUser requireUser(HttpServletRequest request, List<String> allowedRoles) {
         SessionRecord session = requireSessionRecord(request);
         AuthenticatedUser user = new AuthenticatedUser(session.userId(), session.username(), session.email(), session.roleName(), session.isActive(), session.preferences());

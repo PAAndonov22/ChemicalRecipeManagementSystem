@@ -78,6 +78,11 @@ public class AuthController {
         return authService.revokeSession(sessionId, request, request.getRemoteAddr());
     }
 
+    @PostMapping("/account/sessions/revoke-others")
+    public Map<String, Object> revokeOtherSessions(HttpServletRequest request) {
+        return authService.revokeOtherSessions(request, request.getRemoteAddr());
+    }
+
     @GetMapping("/users")
     public Map<String, Object> listUsers(HttpServletRequest request) {
         authService.requireUser(request, List.of("Admin", "Chemist"));
