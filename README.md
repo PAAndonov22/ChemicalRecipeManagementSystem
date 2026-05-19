@@ -70,6 +70,38 @@ data/
 - Repositories / Data Access: execute SQLite statements, transactions, joins, and persistence rules.
 - Models: carry authenticated-user, recipe, version, ingredient, share, and audit-log shapes across layers.
 
+## Clean architecture showcase
+
+This project also demonstrates Clean Architecture ideas by keeping business rules independent from frameworks and infrastructure concerns.
+
+### Dependency direction
+
+- Outer layers depend inward, never the reverse.
+- Controllers depend on service contracts and DTO-style models.
+- Services depend on domain models and repository abstractions.
+- Repositories depend on SQLite/Spring JDBC details and implement data-access behavior for the service layer.
+
+### Mapping to this codebase
+
+- Domain core:
+  - `model/` (business entities and value-like records)
+  - service-level rules for recipe lifecycle, approvals, sharing, sessions, and audit actions
+- Application/use-case layer:
+  - `service/` (input validation, RBAC, orchestration, transaction boundaries)
+- Interface adapters:
+  - `controller/` (HTTP request/response mapping)
+  - `repository/` (query mapping between domain data and SQLite tables)
+- Infrastructure/framework layer:
+  - Spring Boot configuration in `config/`
+  - SQLite schema/bootstrap in `db/`
+  - security/utilities in `util/`
+
+### Why this matters for maintainability
+
+- Business behavior can evolve without tightly coupling to HTTP or database implementation details.
+- Testing is easier because use-case logic is centralized in services.
+- Replacing infrastructure (for example, database or auth transport) has a smaller impact radius.
+
 ## Database schema
 
 The application uses SQLite only.
