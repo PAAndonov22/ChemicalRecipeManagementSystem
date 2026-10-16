@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('My profile')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <h1>My profile</h1>
+    <p class="subtitle">Update your name, email and phone.</p>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="card">
+        <form th:action="@{/profile}" method="post" class="form-grid">
+            <label>Full name <input name="fullName" th:value="${currentUser.fullName}" required></label>
+            <label>Email <input type="email" name="email" th:value="${currentUser.email}" required></label>
+            <label>Phone <input name="phone" th:value="${currentUser.phone}"></label>
+            <label>Role <input th:value="${currentUser.role}" disabled></label>
+            <div class="full"><button class="btn">Save</button></div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

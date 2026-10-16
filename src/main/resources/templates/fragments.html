@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- Shared pieces used by every page -->
+
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | CRMS'">CRMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<header th:fragment="nav" class="topbar">
+    <a class="brand" th:href="@{/}">&#9879; CRMS</a>
+    <nav>
+        <a th:href="@{/}" th:classappend="${currentPath == '/'} ? 'active'">Dashboard</a>
+        <a th:href="@{/recipes}" th:classappend="${currentPath.startsWith('/recipes')} ? 'active'">Recipes</a>
+        <a th:href="@{/orders}" th:classappend="${currentPath.startsWith('/orders')} ? 'active'">Orders</a>
+        <a th:href="@{/reports}" th:classappend="${currentPath.startsWith('/reports')} ? 'active'">Reports</a>
+        <a th:href="@{/insights}" th:classappend="${currentPath.startsWith('/insights')} ? 'active'">AI Insights</a>
+        <th:block th:if="${currentUser.role.name() == 'ADMIN'}">
+            <a th:href="@{/admin/users}" th:classappend="${currentPath == '/admin/users'} ? 'active'">Users</a>
+            <a th:href="@{/admin/users/registrations}" th:classappend="${currentPath.startsWith('/admin/users/registrations')} ? 'active'">New users</a>
+        </th:block>
+    </nav>
+    <div class="who">
+        <a th:href="@{/profile}" th:text="${currentUser.fullName}">Name</a>
+        <span class="badge" th:classappend="${currentUser.role}" th:text="${currentUser.role}">ROLE</span>
+        <form th:action="@{/logout}" method="post"><button class="link">Logout</button></form>
+    </div>
+</header>
+
+<div th:fragment="alerts">
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+</div>
+
+<!-- Report body: summary cards, chart, table per group, events by type, all events -->
+<div th:fragment="reportBody(report)">
+    <div class="grid">
+        <div class="stat"><div class="label">Orders</div><div class="value" th:text="${report.totalOrders()}">0</div></div>
+        <div class="stat teal"><div class="label">Order revenue</div><div class="value" th:text="${#numbers.formatDecimal(report.orderRevenue(), 1, 2)} + ' €'">0</div></div>
+        <div class="stat amber"><div class="label">Events</div><div class="value" th:text="${report.totalEvents()}">0</div></div>
+        <div class="stat green"><div class="label">Money from events</div><div class="value" th:text="${#numbers.formatDecimal(report.eventRevenue(), 1, 2)} + ' €'">0</div></div>
+    </div>
+
+    <div class="card" th:if="${report.rows().size() <= 31}">
+        <h2>Total revenue per <span th:text="${report.groupBy()}">month</span></h2>
+        <div class="chart">
+            <div class="bar-col" th:each="r : ${report.rows()}">
+                <span class="bar-value" th:text="${#numbers.formatDecimal(r.totalRevenue(), 1, 0)}">0</span>
+                <div class="bar" th:style="'height:' + ${r.totalRevenue() * 80 / report.maxRowRevenue()} + '%'"></div>
+                <span class="bar-label" th:text="${r.label()}">label</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card table-wrap">
+        <h2>Grouped by <span th:text="${report.groupBy()}">month</span></h2>
+        <table>
+            <thead><tr><th>Period</th><th class="num">Orders</th><th class="num">Order revenue</th><th class="num">Events</th><th class="num">Event money</th><th class="num">Total</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${report.rows()}">
+                <td th:text="${r.label()}"></td>
+                <td class="num" th:text="${r.orders()}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.orderRevenue(), 1, 2)}"></td>
+                <td class="num" th:text="${r.events()}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.eventRevenue(), 1, 2)}"></td>
+                <td class="num"><b th:text="${#numbers.formatDecimal(r.totalRevenue(), 1, 2)}"></b></td>
+            </tr>
+            <tr th:if="${report.rows().isEmpty()}"><td colspan="6" class="muted">No data for this period.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="two-cols">
+        <div class="card table-wrap">
+            <h2>Events by type</h2>
+            <table>
+                <thead><tr><th>Type</th><th class="num">Count</th><th class="num">Money collected</th></tr></thead>
+                <tbody>
+                <tr th:each="entry : ${report.eventCountByType()}">
+                    <td th:text="${entry.key}"></td>
+                    <td class="num" th:text="${entry.value}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(report.eventRevenueByType().get(entry.key), 1, 2)} + ' €'"></td>
+                </tr>
+                <tr th:if="${report.eventCountByType().isEmpty()}"><td colspan="3" class="muted">No events.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card table-wrap">
+            <h2>All events (<span th:text="${report.events().size()}">0</span>)</h2>
+            <table>
+                <thead><tr><th>Date</th><th>Title</th><th class="num">Tickets</th><th class="num">Money</th></tr></thead>
+                <tbody>
+                <tr th:each="e : ${report.events()}">
+                    <td th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}"></td>
+                    <td th:text="${e.title}"></td>
+                    <td class="num" th:text="${e.ticketsSold}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(e.revenue, 1, 2)} + ' €'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- PDF buttons: view in browser or download -->
+<div th:fragment="pdfButtons(report)" class="btn-row">
+    <a class="btn light" target="_blank"
+       th:href="@{/reports/pdf(from=${report.from()}, to=${report.to()}, groupBy=${report.groupBy()})}">&#128196; View PDF</a>
+    <a class="btn"
+       th:href="@{/reports/pdf(from=${report.from()}, to=${report.to()}, groupBy=${report.groupBy()}, download=true)}">&#11015; Download PDF</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('AI Insights')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <h1>AI Insights</h1>
+    <p class="subtitle">Results of the intelligent methods in IntelligenceService.</p>
+
+    <div class="card">
+        <h2>1. Revenue forecast (linear regression on the last 12 complete months)</h2>
+        <div class="grid" style="margin-bottom: 0">
+            <div class="stat teal" th:each="f : ${forecast}">
+                <div class="label" th:text="${f.month()}">month</div>
+                <div class="value" th:text="${#numbers.formatDecimal(f.revenue(), 1, 2)} + ' €'">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card table-wrap">
+        <h2>2. Unusual orders (anomaly detection, |z-score| &gt; 2.5)</h2>
+        <table>
+            <thead><tr><th>Date</th><th>Customer</th><th>Recipe</th><th class="num">Qty</th><th class="num">Total</th><th class="num">z-score</th></tr></thead>
+            <tbody>
+            <tr th:each="a : ${anomalies}">
+                <td th:text="${#temporals.format(a.order().orderedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                <td th:text="${a.order().customerName}"></td>
+                <td th:text="${a.order().recipe.name}"></td>
+                <td class="num" th:text="${a.order().quantity}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(a.order().total, 1, 2)} + ' €'"></td>
+                <td class="num"><b th:text="${#numbers.formatDecimal(a.zScore(), 1, 2)}"></b></td>
+            </tr>
+            <tr th:if="${anomalies.isEmpty()}"><td colspan="6" class="muted">No unusual orders.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="two-cols">
+        <div class="card table-wrap">
+            <h2>3. Similar recipes (Jaccard similarity)</h2>
+            <table>
+                <thead><tr><th>Recipe</th><th>Most similar</th><th class="num">Match</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${recommendations}">
+                    <td th:text="${r.recipe().name}"></td>
+                    <td th:text="${r.similar().name}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(r.similarity() * 100, 1, 0)} + '%'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card table-wrap">
+            <h2>4. Hazard level (rule-based expert system)</h2>
+            <table>
+                <thead><tr><th>Recipe</th><th>Level</th><th>Why</th></tr></thead>
+                <tbody>
+                <tr th:each="h : ${hazards}">
+                    <td th:text="${h.recipe().name}"></td>
+                    <td><span class="badge" th:classappend="${h.level()}" th:text="${h.level()} + ' (' + ${h.score()} + ')'"></span></td>
+                    <td style="white-space: normal" th:text="${#strings.listJoin(h.reasons(), '; ')}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

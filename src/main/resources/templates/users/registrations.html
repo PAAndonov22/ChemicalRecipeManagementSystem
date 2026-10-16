@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('New users')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <h1>New registrations</h1>
+    <p class="subtitle">Users registered today and in the last week, month and year. Click a card to see the list.</p>
+
+    <div class="grid">
+        <a class="stat" th:each="entry, i : ${counts}"
+           th:href="@{/admin/users/registrations(period=${entry.key})}"
+           th:classappend="${(i.index == 1 ? 'teal' : i.index == 2 ? 'amber' : i.index == 3 ? 'green' : '') + (entry.key == period ? ' selected' : '')}">
+            <div class="label" th:text="${entry.key == 'today' ? 'Today' : 'Last ' + entry.key}">period</div>
+            <div class="value" th:text="${entry.value}">0</div>
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>New users per month (last 12 months)</h2>
+        <div class="chart">
+            <div class="bar-col" th:each="entry : ${perMonth}">
+                <span class="bar-value" th:text="${entry.value}">0</span>
+                <div class="bar" th:style="'height:' + ${entry.value * 80 / maxPerMonth} + '%'"></div>
+                <span class="bar-label" th:text="${#temporals.format(entry.key.atDay(1), 'MMM yy')}">Jan</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card table-wrap">
+        <h2>Registered <span th:text="${period == 'today' ? 'today' : 'in the last ' + period}"></span>
+            (<span th:text="${newUsers.size()}">0</span>)</h2>
+        <table>
+            <thead><tr><th>Registered</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr th:each="u : ${newUsers}">
+                <td th:text="${#temporals.format(u.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                <td><a th:href="@{/admin/users/{id}(id=${u.id})}" th:text="${u.fullName}"></a></td>
+                <td th:text="${u.email}"></td>
+                <td><span class="badge" th:classappend="${u.role}" th:text="${u.role}"></span></td>
+                <td><span class="badge" th:classappend="${u.active} ? 'on' : 'off'" th:text="${u.active} ? 'Active' : 'Deactivated'"></span></td>
+            </tr>
+            <tr th:if="${newUsers.isEmpty()}"><td colspan="5" class="muted">Nobody registered in this period.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

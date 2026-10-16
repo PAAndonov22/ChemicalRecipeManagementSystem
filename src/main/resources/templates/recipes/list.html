@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Recipes')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <th:block th:with="canEdit=${currentUser.role.name() == 'ADMIN' or currentUser.role.name() == 'CHEMIST'}">
+    <div class="page-head">
+        <div>
+            <h1>Recipes</h1>
+            <p class="subtitle"><span th:text="${recipes.size()}">0</span> chemical recipes.</p>
+        </div>
+        <a class="btn" th:if="${canEdit}" th:href="@{/recipes/new}">+ New recipe</a>
+    </div>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <div class="card">
+        <form class="filters" th:action="@{/recipes}" method="get">
+            <label>Search by name <input name="q" th:value="${q}"></label>
+            <button class="btn">Search</button>
+        </form>
+    </div>
+
+    <div class="card table-wrap">
+        <table>
+            <thead><tr><th>Code</th><th>Name</th><th>Ingredients</th><th class="num">Price / L</th><th th:if="${canEdit}"></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${recipes}">
+                <td th:text="${r.code}"></td>
+                <td><b th:text="${r.name}"></b></td>
+                <td th:text="${r.ingredients}" style="white-space: normal"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.price, 1, 2)} + ' €'"></td>
+                <td th:if="${canEdit}"><a th:href="@{/recipes/{id}/edit(id=${r.id})}">Edit</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    </th:block>
+</main>
+</body>
+</html>

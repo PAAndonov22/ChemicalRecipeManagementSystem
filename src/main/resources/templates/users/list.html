@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Users')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Users</h1>
+            <p class="subtitle"><span th:text="${users.totalElements}">0</span> found. Click a column title to sort.</p>
+        </div>
+        <a class="btn" th:href="@{/admin/users/new}">+ New user</a>
+    </div>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <div class="card">
+        <form class="filters" th:action="@{/admin/users}" method="get">
+            <label>Search <input name="q" th:value="${q}" placeholder="name, email or phone"></label>
+            <label>Role
+                <select name="role">
+                    <option value="">All roles</option>
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${r.name() == role}"></option>
+                </select>
+            </label>
+            <label>Status
+                <select name="status">
+                    <option value="">All</option>
+                    <option value="active" th:selected="${status == 'active'}">Active</option>
+                    <option value="inactive" th:selected="${status == 'inactive'}">Deactivated</option>
+                </select>
+            </label>
+            <input type="hidden" name="sort" th:value="${sort}">
+            <input type="hidden" name="dir" th:value="${dir}">
+            <button class="btn">Search</button>
+            <a class="btn light" th:href="@{/admin/users}">Clear</a>
+        </form>
+    </div>
+
+    <div class="card table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <!-- each header link sorts by that column; clicking again flips the direction -->
+                <th th:each="col : ${ {'fullName', 'email', 'role', 'createdAt'} }">
+                    <a th:href="@{/admin/users(q=${q}, role=${role}, status=${status}, sort=${col}, dir=${sort == col and dir == 'asc' ? 'desc' : 'asc'})}"
+                       th:text="${col == 'fullName' ? 'Name' : col == 'createdAt' ? 'Registered' : col} + ${sort == col ? (dir == 'asc' ? ' ▲' : ' ▼') : ''}">col</a>
+                </th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${users.content}" th:classappend="${!u.active} ? 'inactive'">
+                <td th:text="${u.fullName}"></td>
+                <td th:text="${u.email}"></td>
+                <td><span class="badge" th:classappend="${u.role}" th:text="${u.role}"></span></td>
+                <td th:text="${#temporals.format(u.createdAt, 'dd.MM.yyyy')}"></td>
+                <td th:text="${u.phone}"></td>
+                <td><span class="badge" th:classappend="${u.active} ? 'on' : 'off'" th:text="${u.active} ? 'Active' : 'Deactivated'"></span></td>
+                <td><a th:href="@{/admin/users/{id}(id=${u.id})}">Edit</a></td>
+            </tr>
+            <tr th:if="${users.content.isEmpty()}"><td colspan="7" class="muted">No users match.</td></tr>
+            </tbody>
+        </table>
+
+        <div class="pagination" th:if="${users.totalPages > 1}">
+            <a th:if="${users.hasPrevious()}" th:href="@{/admin/users(q=${q}, role=${role}, status=${status}, sort=${sort}, dir=${dir}, page=${users.number - 1})}">&larr; Prev</a>
+            <th:block th:each="i : ${#numbers.sequence(0, users.totalPages - 1)}">
+                <span th:if="${i == users.number}" class="current" th:text="${i + 1}"></span>
+                <a th:unless="${i == users.number}" th:href="@{/admin/users(q=${q}, role=${role}, status=${status}, sort=${sort}, dir=${dir}, page=${i})}" th:text="${i + 1}"></a>
+            </th:block>
+            <a th:if="${users.hasNext()}" th:href="@{/admin/users(q=${q}, role=${role}, status=${status}, sort=${sort}, dir=${dir}, page=${users.number + 1})}">Next &rarr;</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>
