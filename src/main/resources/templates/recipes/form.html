@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Recipe')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <p><a th:href="@{/recipes}">&larr; Back to recipes</a></p>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="card">
+        <h1 th:text="${recipe.id == null} ? 'New recipe' : 'Edit ' + ${recipe.name}">Recipe</h1>
+        <form th:action="@{/recipes/save}" th:object="${recipe}" method="post" class="form-grid">
+            <input type="hidden" th:field="*{id}">
+            <label>Code <input th:field="*{code}" required></label>
+            <label>Name <input th:field="*{name}" required></label>
+            <label class="full">Ingredients (comma separated) <input th:field="*{ingredients}" required></label>
+            <label class="full">Description <textarea th:field="*{description}" rows="3"></textarea></label>
+            <label>Price per litre (€) <input type="number" step="0.01" min="0.01" th:field="*{price}" required></label>
+            <div class="full"><button class="btn">Save</button></div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

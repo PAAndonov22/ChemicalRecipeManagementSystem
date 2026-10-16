@@ -1,61 +1,10 @@
-# Prerequisites
-*.d
+# Build output
+target/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# debug information files
-*.dwo
-
-# Node / Frontend / API
-node_modules/
-dist/
-coverage/
-*.log
-*.tsbuildinfo
-
-# Environment and local DB
-.env
-.env.*
-!.env.example
-build/
+# Local H2 database (demo data is recreated by MockData)
 data/*.db
-data/*.db-shm
-data/*.db-wal
 
 # IDE
-.vscode/
 .idea/
+.vscode/
+*.iml

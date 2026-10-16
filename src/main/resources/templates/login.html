@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Login')}"></head>
+<body class="login-page">
+<div class="card login-box">
+    <h1>&#9879; CRMS</h1>
+    <p class="subtitle">Chemical Recipe Management System</p>
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <form th:action="@{/login}" method="post">
+        <label>Email <input type="email" name="email" value="admin@crms.local" required></label>
+        <label>Password <input type="password" name="password" required></label>
+        <button class="btn big">Log in</button>
+    </form>
+    <p class="hint">Demo: admin@crms.local / Admin123! &middot; others (chemist, vet, reception, technician @crms.local) / Pass123!</p>
+</div>
+</body>
+</html>

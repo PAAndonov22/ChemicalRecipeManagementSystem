@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${user == null} ? 'New user' : 'Edit user')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <p><a th:href="@{/admin/users}">&larr; Back to users</a></p>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <!-- CREATE -->
+    <div class="card" th:if="${user == null}">
+        <h1>New user</h1>
+        <p class="subtitle">Create an ADMIN, CHEMIST, TECHNICIAN, VET or RECEPTION account.</p>
+        <form th:action="@{/admin/users}" method="post" class="form-grid">
+            <label>Full name <input name="fullName" required></label>
+            <label>Email <input type="email" name="email" required></label>
+            <label>Phone <input name="phone"></label>
+            <label>Password <input type="password" name="password" minlength="6" required></label>
+            <label>Role
+                <select name="role">
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                </select>
+            </label>
+            <div class="full"><button class="btn">Create user</button></div>
+        </form>
+    </div>
+
+    <!-- EDIT -->
+    <th:block th:if="${user != null}">
+        <div class="card">
+            <h1 th:text="${user.fullName}">Name</h1>
+            <p class="subtitle">
+                Registered <span th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy HH:mm')}"></span> &middot;
+                <span class="badge" th:classappend="${user.active} ? 'on' : 'off'" th:text="${user.active} ? 'Active' : 'Deactivated'"></span>
+            </p>
+            <h2>Profile</h2>
+            <form th:action="@{/admin/users/{id}(id=${user.id})}" method="post" class="form-grid">
+                <label>Full name <input name="fullName" th:value="${user.fullName}" required></label>
+                <label>Email <input type="email" name="email" th:value="${user.email}" required></label>
+                <label>Phone <input name="phone" th:value="${user.phone}"></label>
+                <div class="full"><button class="btn">Save profile</button></div>
+            </form>
+        </div>
+
+        <div class="two-cols">
+            <div class="card">
+                <h2>Role</h2>
+                <form th:action="@{/admin/users/{id}/role(id=${user.id})}" method="post" class="filters">
+                    <select name="role">
+                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${r == user.role}"></option>
+                    </select>
+                    <button class="btn">Change role</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>Account status</h2>
+                <p class="muted">Deactivating is a soft delete: the user stays in the database but cannot log in.</p>
+                <form th:action="@{/admin/users/{id}/active(id=${user.id})}" method="post">
+                    <input type="hidden" name="active" th:value="${!user.active}">
+                    <button class="btn" th:classappend="${user.active} ? 'danger' : 'success'"
+                            th:text="${user.active} ? 'Deactivate user' : 'Activate user'">Toggle</button>
+                </form>
+            </div>
+        </div>
+    </th:block>
+</main>
+</body>
+</html>

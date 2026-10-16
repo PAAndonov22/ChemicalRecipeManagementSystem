@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Reports')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Reports &mdash; statistics</h1>
+            <p class="subtitle">Summary data for any period, grouped by a criterion.</p>
+        </div>
+        <div class="tabs">
+            <a class="active" th:href="@{/reports}">Statistics</a>
+            <a th:href="@{/reports/monthly}">1 / 6 / 12 months</a>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <div class="card">
+        <form class="filters" th:action="@{/reports}" method="get">
+            <label>From <input type="date" name="from" th:value="${report.from()}" required></label>
+            <label>To <input type="date" name="to" th:value="${report.to()}" required></label>
+            <label>Group by
+                <select name="groupBy">
+                    <option th:each="g : ${groups}" th:value="${g}" th:text="${g}" th:selected="${g == report.groupBy()}"></option>
+                </select>
+            </label>
+            <button class="btn">Show</button>
+        </form>
+        <br>
+        <div th:replace="~{fragments :: pdfButtons(${report})}"></div>
+    </div>
+
+    <div th:replace="~{fragments :: reportBody(${report})}"></div>
+</main>
+</body>
+</html>
