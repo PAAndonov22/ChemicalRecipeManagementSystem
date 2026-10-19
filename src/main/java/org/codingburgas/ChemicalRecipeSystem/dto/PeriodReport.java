@@ -1,16 +1,18 @@
-package org.codingburgas.ChemicalRecipeSystem.models;
+package org.codingburgas.ChemicalRecipeSystem.dto;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-/** Everything a report page (and the PDF) needs for one period. */
+import org.codingburgas.ChemicalRecipeSystem.models.EventType;
+
+/** DTO: everything a report page (and the PDF) needs for one period. */
 public record PeriodReport(
     LocalDate from,
     LocalDate to,
     String groupBy,
     List<ReportRow> rows,
-    List<Event> events,
+    List<EventDto> events,
     Map<EventType, Long> eventCountByType,
     Map<EventType, Double> eventRevenueByType
 ) {

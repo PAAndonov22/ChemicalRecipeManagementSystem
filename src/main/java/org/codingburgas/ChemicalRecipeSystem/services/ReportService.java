@@ -9,16 +9,20 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.codingburgas.ChemicalRecipeSystem.dto.DtoMapper;
+import org.codingburgas.ChemicalRecipeSystem.dto.EventDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.PeriodReport;
+import org.codingburgas.ChemicalRecipeSystem.dto.ReportRow;
 import org.codingburgas.ChemicalRecipeSystem.models.Event;
 import org.codingburgas.ChemicalRecipeSystem.models.EventType;
 import org.codingburgas.ChemicalRecipeSystem.models.Order;
-import org.codingburgas.ChemicalRecipeSystem.models.PeriodReport;
-import org.codingburgas.ChemicalRecipeSystem.models.ReportRow;
 import org.codingburgas.ChemicalRecipeSystem.repositories.EventRepository;
 import org.codingburgas.ChemicalRecipeSystem.repositories.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class ReportService {
     public static final List<String> GROUPS = List.of("day", "week", "month", "year");
     public static final List<Integer> MONTH_OPTIONS = List.of(1, 6, 12);
@@ -63,7 +67,8 @@ public class ReportService {
         Map<EventType, Double> revenueByType = periodEvents.stream()
             .collect(Collectors.groupingBy(Event::getType, () -> new EnumMap<>(EventType.class), Collectors.summingDouble(Event::getRevenue)));
 
-        return new PeriodReport(from, to, groupBy, new ArrayList<>(rows.values()), periodEvents, countByType, revenueByType);
+        List<EventDto> eventDtos = periodEvents.stream().map(DtoMapper::toEventDto).toList();
+        return new PeriodReport(from, to, groupBy, new ArrayList<>(rows.values()), eventDtos, countByType, revenueByType);
     }
 
     /**

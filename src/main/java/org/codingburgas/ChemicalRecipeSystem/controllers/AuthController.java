@@ -1,12 +1,15 @@
 package org.codingburgas.ChemicalRecipeSystem.controllers;
 
-import org.codingburgas.ChemicalRecipeSystem.models.User;
+import org.codingburgas.ChemicalRecipeSystem.dto.ProfileForm;
+import org.codingburgas.ChemicalRecipeSystem.dto.UserDto;
 import org.codingburgas.ChemicalRecipeSystem.services.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
@@ -48,10 +51,9 @@ public class AuthController {
     }
 
     @PostMapping("/profile")
-    public String updateProfile(@RequestParam String fullName, @RequestParam String email, @RequestParam String phone,
+    public String updateProfile(@ModelAttribute ProfileForm form, @SessionAttribute("user") UserDto me,
                                 HttpSession session, RedirectAttributes redirect) {
-        User me = (User) session.getAttribute("user");
-        session.setAttribute("user", userService.updateProfile(me.getId(), fullName, email, phone));
+        session.setAttribute("user", userService.updateProfile(me.getId(), form));
         redirect.addFlashAttribute("success", "Profile updated.");
         return "redirect:/profile";
     }

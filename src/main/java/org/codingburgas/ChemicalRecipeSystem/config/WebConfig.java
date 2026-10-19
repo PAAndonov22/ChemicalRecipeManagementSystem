@@ -2,8 +2,8 @@ package org.codingburgas.ChemicalRecipeSystem.config;
 
 import java.io.IOException;
 
+import org.codingburgas.ChemicalRecipeSystem.dto.UserDto;
 import org.codingburgas.ChemicalRecipeSystem.models.Role;
-import org.codingburgas.ChemicalRecipeSystem.models.User;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Simple access control:
- * - every page needs a logged in user (stored in the HTTP session)
+ * - every page needs a logged in user (a UserDto stored in the HTTP session)
  * - /admin/** is only for ADMIN
  * - creating / editing recipes is only for ADMIN and CHEMIST
  */
@@ -28,7 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
     static class LoginInterceptor implements HandlerInterceptor {
         @Override
         public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
-            User user = (User) request.getSession().getAttribute("user");
+            UserDto user = (UserDto) request.getSession().getAttribute("user");
             if (user == null) {
                 response.sendRedirect("/login");
                 return false;

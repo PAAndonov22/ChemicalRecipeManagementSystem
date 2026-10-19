@@ -9,6 +9,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.codingburgas.ChemicalRecipeSystem.dto.DtoMapper;
+import org.codingburgas.ChemicalRecipeSystem.dto.ProfileForm;
+import org.codingburgas.ChemicalRecipeSystem.dto.UserDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.UserForm;
 import org.codingburgas.ChemicalRecipeSystem.models.Role;
 import org.codingburgas.ChemicalRecipeSystem.models.User;
 import org.codingburgas.ChemicalRecipeSystem.repositories.UserRepository;
@@ -18,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/** All user logic. Works with User entities inside, gives only UserDto objects out. */
 @Service
 public class UserService {
     private static final Set<String> SORTABLE = Set.of("fullName", "email", "role", "createdAt");
@@ -30,70 +35,81 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Optional<User> login(String email, String password) {
+    public Optional<UserDto> login(String email, String password) {
         return users.findByEmail(email.trim().toLowerCase())
             .filter(User::isActive)
-            .filter(user -> passwordEncoder.matches(password, user.getPassword()));
+            .filter(user -> passwordEncoder.matches(password, user.getPassword()))
+            .map(DtoMapper::toUserDto);
     }
 
-    public User get(Long id) {
-        return users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found."));
+    public UserDto get(Long id) {
+        return DtoMapper.toUserDto(find(id));
     }
 
     /** Admin search: text + role + status filter, sorted and split into pages. */
-    public Page<User> search(String text, Role role, Boolean active, String sort, String direction, int page, int size) {
+    public Page<UserDto> search(String text, Role role, Boolean active, String sort, String direction, int page, int size) {
         String sortField = SORTABLE.contains(sort) ? sort : "createdAt";
         Sort.Direction dir = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), size, Sort.by(dir, sortField));
-        return users.search(text.trim(), role, active, pageRequest);
+        return users.search(text.trim(), role, active, pageRequest).map(DtoMapper::toUserDto);
     }
 
-    public User create(String fullName, String email, String phone, String password, Role role) {
+    public UserDto create(UserForm form) {
+        return create(form.getFullName(), form.getEmail(), form.getPhone(), form.getPassword(), form.getRole());
+    }
+
+    public UserDto create(String fullName, String email, String phone, String password, Role role) {
+        if (fullName == null || fullName.isBlank() || email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Name and email are required.");
+        }
+        if (role == null) {
+            throw new IllegalArgumentException("Choose a role.");
+        }
         email = email.trim().toLowerCase();
         if (users.existsByEmail(email)) {
             throw new IllegalArgumentException("Email " + email + " is already used.");
         }
-        if (password.length() < 6) {
+        if (password == null || password.length() < 6) {
             throw new IllegalArgumentException("Password must be at least 6 characters.");
         }
         User user = new User();
         user.setFullName(fullName.trim());
         user.setEmail(email);
-        user.setPhone(phone.trim());
+        user.setPhone(phone == null ? "" : phone.trim());
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(role);
-        return users.save(user);
+        return DtoMapper.toUserDto(users.save(user));
     }
 
     /** Update name, email and phone. */
-    public User updateProfile(Long id, String fullName, String email, String phone) {
-        User user = get(id);
-        email = email.trim().toLowerCase();
+    public UserDto updateProfile(Long id, ProfileForm form) {
+        User user = find(id);
+        String email = form.getEmail().trim().toLowerCase();
         if (!email.equals(user.getEmail()) && users.existsByEmail(email)) {
             throw new IllegalArgumentException("Email " + email + " is already used.");
         }
-        user.setFullName(fullName.trim());
+        user.setFullName(form.getFullName().trim());
         user.setEmail(email);
-        user.setPhone(phone.trim());
-        return users.save(user);
+        user.setPhone(form.getPhone() == null ? "" : form.getPhone().trim());
+        return DtoMapper.toUserDto(users.save(user));
     }
 
     /** Only called from admin pages. An admin cannot demote or deactivate themselves. */
-    public void changeRole(Long id, Role role, User admin) {
-        if (id.equals(admin.getId()) && role != Role.ADMIN) {
+    public void changeRole(Long id, Role role, Long currentUserId) {
+        if (id.equals(currentUserId) && role != Role.ADMIN) {
             throw new IllegalArgumentException("You cannot remove your own ADMIN role.");
         }
-        User user = get(id);
+        User user = find(id);
         user.setRole(role);
         users.save(user);
     }
 
     /** Soft delete: the user stays in the database but can no longer log in. */
-    public void setActive(Long id, boolean active, User admin) {
-        if (id.equals(admin.getId()) && !active) {
+    public void setActive(Long id, boolean active, Long currentUserId) {
+        if (id.equals(currentUserId) && !active) {
             throw new IllegalArgumentException("You cannot deactivate yourself.");
         }
-        User user = get(id);
+        User user = find(id);
         user.setActive(active);
         users.save(user);
     }
@@ -117,8 +133,10 @@ public class UserService {
         return counts;
     }
 
-    public List<User> registeredSince(String period) {
-        return users.findByCreatedAtAfterOrderByCreatedAtDesc(periodStart(period));
+    public List<UserDto> registeredSince(String period) {
+        return users.findByCreatedAtAfterOrderByCreatedAtDesc(periodStart(period)).stream()
+            .map(DtoMapper::toUserDto)
+            .toList();
     }
 
     /** New users per month for the last 12 months (oldest first) - for the bar chart. */
@@ -132,5 +150,9 @@ public class UserService {
             result.merge(YearMonth.from(user.getCreatedAt()), 1L, Long::sum);
         }
         return result;
+    }
+
+    private User find(Long id) {
+        return users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found."));
     }
 }

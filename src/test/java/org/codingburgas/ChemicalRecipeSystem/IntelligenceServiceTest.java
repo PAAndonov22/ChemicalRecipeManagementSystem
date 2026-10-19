@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.codingburgas.ChemicalRecipeSystem.models.Customer;
+import org.codingburgas.ChemicalRecipeSystem.models.Ingredient;
 import org.codingburgas.ChemicalRecipeSystem.models.Order;
 import org.codingburgas.ChemicalRecipeSystem.models.Recipe;
 import org.codingburgas.ChemicalRecipeSystem.services.IntelligenceService;
@@ -29,23 +31,31 @@ class IntelligenceServiceTest {
 
     @Test
     void expertSystemFlagsOxidizerWithSolvent() {
-        Recipe recipe = new Recipe();
-        recipe.setIngredients("Ethanol, Hydrogen Peroxide, Water");
-        assertEquals("HIGH", IntelligenceService.assessHazard(recipe).level());
+        Recipe dangerous = new Recipe();
+        dangerous.addIngredient(new Ingredient("Ethanol", "64-17-5"), 500, "ml");
+        dangerous.addIngredient(new Ingredient("Hydrogen Peroxide", "7722-84-1"), 50, "ml");
+        dangerous.addIngredient(new Ingredient("Water", null), 450, "ml");
+        assertEquals("HIGH", IntelligenceService.assessHazard(dangerous).level());
 
-        recipe.setIngredients("Water, Glycerin");
-        assertEquals("LOW", IntelligenceService.assessHazard(recipe).level());
+        Recipe safe = new Recipe();
+        safe.addIngredient(new Ingredient("Water", null), 900, "ml");
+        safe.addIngredient(new Ingredient("Glycerin", null), 100, "ml");
+        assertEquals("LOW", IntelligenceService.assessHazard(safe).level());
     }
 
     @Test
     void findsTheOneHugeOrder() {
         Recipe recipe = new Recipe();
         recipe.setPrice(10);
+        Customer a = new Customer("A Ltd", "Ann", null, null, "Burgas");
+        Customer b = new Customer("B Ltd", "Bob", null, null, "Sofia");
         List<Order> orders = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
-            orders.add(new Order(recipe, "A", 5, LocalDateTime.now()));
+            orders.add(new Order(recipe, a, null, 5, LocalDateTime.now()));
         }
-        orders.add(new Order(recipe, "B", 500, LocalDateTime.now()));
-        assertEquals(1, IntelligenceService.findAnomalies(orders, 2.5).size());
+        orders.add(new Order(recipe, b, null, 500, LocalDateTime.now()));
+        var anomalies = IntelligenceService.findAnomalies(orders, 2.5);
+        assertEquals(1, anomalies.size());
+        assertEquals("B Ltd", anomalies.getFirst().order().getCustomerName());
     }
 }

@@ -5,10 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import org.codingburgas.ChemicalRecipeSystem.models.Event;
+import org.codingburgas.ChemicalRecipeSystem.dto.EventDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.PeriodReport;
+import org.codingburgas.ChemicalRecipeSystem.dto.ReportRow;
 import org.codingburgas.ChemicalRecipeSystem.models.EventType;
-import org.codingburgas.ChemicalRecipeSystem.models.PeriodReport;
-import org.codingburgas.ChemicalRecipeSystem.models.ReportRow;
 import org.springframework.stereotype.Service;
 
 import com.lowagie.text.Document;
@@ -65,7 +65,7 @@ public class PdfService {
 
         heading(doc, "All events");
         PdfPTable eventsTable = table("Date", "Title", "Type", "Tickets", "Money");
-        for (Event e : report.events()) {
+        for (EventDto e : report.events()) {
             row(eventsTable, e.getDate().toString(), e.getTitle(), e.getType().name(), String.valueOf(e.getTicketsSold()), money(e.getRevenue()));
         }
         doc.add(eventsTable);

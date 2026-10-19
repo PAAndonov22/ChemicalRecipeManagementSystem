@@ -4,7 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.codingburgas.ChemicalRecipeSystem.models.Order;
+import org.codingburgas.ChemicalRecipeSystem.dto.OrderDto;
 import org.codingburgas.ChemicalRecipeSystem.services.OrderService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -28,9 +28,9 @@ public class OrderController {
                        @RequestParam(defaultValue = "date") String sort,
                        @RequestParam(defaultValue = "desc") String dir,
                        Model model) {
-        List<Order> orders = orderService.filterAndSort(week, date, day, hour, sort, dir.equals("desc"));
+        List<OrderDto> orders = orderService.search(week, date, day, hour, sort, dir.equals("desc"));
         model.addAttribute("orders", orders);
-        model.addAttribute("total", orders.stream().mapToDouble(Order::getTotal).sum());
+        model.addAttribute("total", orders.stream().mapToDouble(OrderDto::getTotal).sum());
         model.addAttribute("week", week);
         model.addAttribute("date", date);
         model.addAttribute("day", day);

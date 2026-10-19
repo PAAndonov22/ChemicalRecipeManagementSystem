@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.codingburgas.ChemicalRecipeSystem.models.Customer;
 import org.codingburgas.ChemicalRecipeSystem.models.Order;
 import org.codingburgas.ChemicalRecipeSystem.models.Recipe;
 import org.codingburgas.ChemicalRecipeSystem.repositories.OrderRepository;
@@ -17,11 +18,12 @@ import org.junit.jupiter.api.Test;
 
 class OrderServiceTest {
     private final Recipe recipe = new Recipe();
+    private final Customer customer = new Customer("Test Ltd", "Tester", null, null, "Burgas");
     // Friday 2026-10-16, ISO week 2026-W42
-    private final Order morning = new Order(recipe, "A", 1, LocalDateTime.of(2026, 10, 16, 9, 0));
-    private final Order evening = new Order(recipe, "B", 1, LocalDateTime.of(2026, 10, 16, 18, 0));
-    private final Order monday = new Order(recipe, "C", 1, LocalDateTime.of(2026, 10, 12, 9, 30));
-    private final Order lastMonth = new Order(recipe, "D", 1, LocalDateTime.of(2026, 9, 1, 12, 0));
+    private final Order morning = new Order(recipe, customer, null, 1, LocalDateTime.of(2026, 10, 16, 9, 0));
+    private final Order evening = new Order(recipe, customer, null, 1, LocalDateTime.of(2026, 10, 16, 18, 0));
+    private final Order monday = new Order(recipe, customer, null, 1, LocalDateTime.of(2026, 10, 12, 9, 30));
+    private final Order lastMonth = new Order(recipe, customer, null, 1, LocalDateTime.of(2026, 9, 1, 12, 0));
     private final OrderService service;
 
     OrderServiceTest() {
