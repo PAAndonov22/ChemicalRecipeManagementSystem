@@ -5,17 +5,11 @@ import java.time.LocalDate;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 /** A paid event (workshop, training...). Money collected = tickets sold * ticket price. */
 @Entity
-public class Event {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class Event extends BaseEntity {
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -25,25 +19,30 @@ public class Event {
     private int ticketsSold;
     private double ticketPrice;
 
-    public Event() {
+    /** Many-to-One association: the employee who organizes the event. */
+    @ManyToOne
+    private User organizer;
+
+    protected Event() {
     }
 
-    public Event(String title, EventType type, LocalDate date, int ticketsSold, double ticketPrice) {
+    public Event(String title, EventType type, LocalDate date, int ticketsSold, double ticketPrice, User organizer) {
         this.title = title;
         this.type = type;
         this.date = date;
         this.ticketsSold = ticketsSold;
         this.ticketPrice = ticketPrice;
+        this.organizer = organizer;
     }
 
     public double getRevenue() {
         return ticketsSold * ticketPrice;
     }
 
-    public Long getId() { return id; }
     public String getTitle() { return title; }
     public EventType getType() { return type; }
     public LocalDate getDate() { return date; }
     public int getTicketsSold() { return ticketsSold; }
     public double getTicketPrice() { return ticketPrice; }
+    public User getOrganizer() { return organizer; }
 }

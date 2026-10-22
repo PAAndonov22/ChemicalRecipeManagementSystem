@@ -12,9 +12,31 @@
             <input type="hidden" th:field="*{id}">
             <label>Code <input th:field="*{code}" required></label>
             <label>Name <input th:field="*{name}" required></label>
-            <label class="full">Ingredients (comma separated) <input th:field="*{ingredients}" required></label>
-            <label class="full">Description <textarea th:field="*{description}" rows="3"></textarea></label>
             <label>Price per litre (€) <input type="number" step="0.01" min="0.01" th:field="*{price}" required></label>
+            <div></div>
+            <label class="full">Ingredients per litre &mdash; one per line: <code>name, quantity, unit</code>
+                <textarea th:field="*{ingredients}" rows="6" required
+                          placeholder="Distilled Water, 900, ml&#10;Glycerin, 100, ml"></textarea>
+            </label>
+            <label class="full">Description <textarea th:field="*{description}" rows="3"></textarea></label>
+
+            <fieldset class="full checks">
+                <legend>Categories</legend>
+                <label th:each="c : ${categories}">
+                    <input type="checkbox" th:field="*{categoryIds}" th:value="${c.id}">
+                    <span th:text="${c.name}" th:title="${c.description}">Category</span>
+                </label>
+            </fieldset>
+
+            <h2 class="full">Safety data sheet</h2>
+            <label>Hazard class <input th:field="*{hazardClass}" placeholder="Flammable liquid, Cat. 2"></label>
+            <label>Signal word
+                <select th:field="*{signalWord}">
+                    <option th:each="w : ${signalWords}" th:value="${w}" th:text="${w}"></option>
+                </select>
+            </label>
+            <label class="full">Storage conditions <input th:field="*{storageConditions}"></label>
+            <label class="full">Protective equipment <input th:field="*{protectiveEquipment}"></label>
             <div class="full"><button class="btn">Save</button></div>
         </form>
     </div>

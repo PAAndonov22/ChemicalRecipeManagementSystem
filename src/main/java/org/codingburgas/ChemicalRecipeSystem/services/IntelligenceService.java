@@ -9,12 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.codingburgas.ChemicalRecipeSystem.dto.DtoMapper;
+import org.codingburgas.ChemicalRecipeSystem.dto.OrderDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.RecipeDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.ReportRow;
 import org.codingburgas.ChemicalRecipeSystem.models.Order;
 import org.codingburgas.ChemicalRecipeSystem.models.Recipe;
-import org.codingburgas.ChemicalRecipeSystem.models.ReportRow;
 import org.codingburgas.ChemicalRecipeSystem.repositories.OrderRepository;
 import org.codingburgas.ChemicalRecipeSystem.repositories.RecipeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Methods for working with intelligent systems:
@@ -24,11 +28,13 @@ import org.springframework.stereotype.Service;
  * 4. Expert system    - IF-THEN rules classify the hazard level of a recipe
  */
 @Service
+@Transactional(readOnly = true)
 public class IntelligenceService {
     public record Forecast(String month, double revenue) {}
-    public record Anomaly(Order order, double zScore) {}
-    public record Recommendation(Recipe recipe, Recipe similar, double similarity) {}
-    public record HazardAssessment(Recipe recipe, String level, int score, List<String> reasons) {}
+    // results are DTOs too, so the view never touches an entity
+    public record Anomaly(OrderDto order, double zScore) {}
+    public record Recommendation(RecipeDto recipe, RecipeDto similar, double similarity) {}
+    public record HazardAssessment(RecipeDto recipe, String level, int score, List<String> reasons) {}
 
     /** Knowledge base of the expert system: ingredient -> danger points and explanation. */
     private static final Map<String, Rule> RULES = Map.of(
@@ -104,7 +110,7 @@ public class IntelligenceService {
             return List.of();
         }
         return list.stream()
-            .map(o -> new Anomaly(o, (o.getTotal() - mean) / std))
+            .map(o -> new Anomaly(DtoMapper.toOrderDto(o), (o.getTotal() - mean) / std))
             .filter(a -> Math.abs(a.zScore()) > threshold)
             .sorted(Comparator.comparingDouble((Anomaly a) -> Math.abs(a.zScore())).reversed())
             .toList();
@@ -119,9 +125,9 @@ public class IntelligenceService {
         for (Recipe recipe : all) {
             all.stream()
                 .filter(other -> !other.getId().equals(recipe.getId()))
-                .map(other -> new Recommendation(recipe, other, jaccard(recipe.ingredientSet(), other.ingredientSet())))
-                .max(Comparator.comparingDouble(Recommendation::similarity))
-                .ifPresent(result::add);
+                .max(Comparator.comparingDouble((Recipe other) -> jaccard(recipe.ingredientSet(), other.ingredientSet())))
+                .ifPresent(best -> result.add(new Recommendation(DtoMapper.toRecipeDto(recipe), DtoMapper.toRecipeDto(best),
+                    jaccard(recipe.ingredientSet(), best.ingredientSet()))));
         }
         return result;
     }
@@ -168,6 +174,6 @@ public class IntelligenceService {
         if (reasons.isEmpty()) {
             reasons.add("No hazardous ingredients found");
         }
-        return new HazardAssessment(recipe, level, score, reasons);
+        return new HazardAssessment(DtoMapper.toRecipeDto(recipe), level, score, reasons);
     }
 }

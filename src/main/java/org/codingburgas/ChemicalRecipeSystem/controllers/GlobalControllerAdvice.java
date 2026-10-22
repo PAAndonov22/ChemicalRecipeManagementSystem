@@ -1,6 +1,6 @@
 package org.codingburgas.ChemicalRecipeSystem.controllers;
 
-import org.codingburgas.ChemicalRecipeSystem.models.User;
+import org.codingburgas.ChemicalRecipeSystem.dto.UserDto;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpSession;
 @ControllerAdvice
 public class GlobalControllerAdvice {
     @ModelAttribute("currentUser")
-    public User currentUser(HttpSession session) {
-        return (User) session.getAttribute("user");
+    public UserDto currentUser(HttpSession session) {
+        return (UserDto) session.getAttribute("user");
     }
 
     @ModelAttribute("currentPath")

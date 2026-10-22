@@ -1,11 +1,14 @@
 package org.codingburgas.ChemicalRecipeSystem.controllers;
 
+import org.codingburgas.ChemicalRecipeSystem.dto.ProfileForm;
+import org.codingburgas.ChemicalRecipeSystem.dto.UserDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.UserForm;
 import org.codingburgas.ChemicalRecipeSystem.models.Role;
-import org.codingburgas.ChemicalRecipeSystem.models.User;
 import org.codingburgas.ChemicalRecipeSystem.services.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,10 +56,9 @@ public class UserController {
     }
 
     @PostMapping
-    public String create(@RequestParam String fullName, @RequestParam String email, @RequestParam String phone,
-                         @RequestParam String password, @RequestParam Role role, RedirectAttributes redirect) {
-        userService.create(fullName, email, phone, password, role);
-        redirect.addFlashAttribute("success", "User " + email + " created.");
+    public String create(@ModelAttribute UserForm form, RedirectAttributes redirect) {
+        UserDto created = userService.create(form);
+        redirect.addFlashAttribute("success", "User " + created.getEmail() + " created.");
         return "redirect:/admin/users";
     }
 
@@ -68,23 +70,22 @@ public class UserController {
     }
 
     @PostMapping("/{id}")
-    public String update(@PathVariable Long id, @RequestParam String fullName, @RequestParam String email,
-                         @RequestParam String phone, RedirectAttributes redirect) {
-        userService.updateProfile(id, fullName, email, phone);
+    public String update(@PathVariable Long id, @ModelAttribute ProfileForm form, RedirectAttributes redirect) {
+        userService.updateProfile(id, form);
         redirect.addFlashAttribute("success", "Profile saved.");
         return "redirect:/admin/users/" + id;
     }
 
     @PostMapping("/{id}/role")
-    public String changeRole(@PathVariable Long id, @RequestParam Role role, @SessionAttribute("user") User admin, RedirectAttributes redirect) {
-        userService.changeRole(id, role, admin);
+    public String changeRole(@PathVariable Long id, @RequestParam Role role, @SessionAttribute("user") UserDto admin, RedirectAttributes redirect) {
+        userService.changeRole(id, role, admin.getId());
         redirect.addFlashAttribute("success", "Role changed to " + role + ".");
         return "redirect:/admin/users/" + id;
     }
 
     @PostMapping("/{id}/active")
-    public String setActive(@PathVariable Long id, @RequestParam boolean active, @SessionAttribute("user") User admin, RedirectAttributes redirect) {
-        userService.setActive(id, active, admin);
+    public String setActive(@PathVariable Long id, @RequestParam boolean active, @SessionAttribute("user") UserDto admin, RedirectAttributes redirect) {
+        userService.setActive(id, active, admin.getId());
         redirect.addFlashAttribute("success", active ? "User activated." : "User deactivated.");
         return "redirect:/admin/users/" + id;
     }

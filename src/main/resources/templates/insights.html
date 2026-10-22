@@ -25,7 +25,7 @@
             <tr th:each="a : ${anomalies}">
                 <td th:text="${#temporals.format(a.order().orderedAt, 'dd.MM.yyyy HH:mm')}"></td>
                 <td th:text="${a.order().customerName}"></td>
-                <td th:text="${a.order().recipe.name}"></td>
+                <td th:text="${a.order().recipeName}"></td>
                 <td class="num" th:text="${a.order().quantity}"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(a.order().total, 1, 2)} + ' €'"></td>
                 <td class="num"><b th:text="${#numbers.formatDecimal(a.zScore(), 1, 2)}"></b></td>

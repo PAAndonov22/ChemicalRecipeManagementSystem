@@ -5,11 +5,15 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 
+import org.codingburgas.ChemicalRecipeSystem.dto.DtoMapper;
+import org.codingburgas.ChemicalRecipeSystem.dto.OrderDto;
 import org.codingburgas.ChemicalRecipeSystem.models.Order;
 import org.codingburgas.ChemicalRecipeSystem.repositories.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
     private final OrderRepository orders;
 
@@ -17,8 +21,13 @@ public class OrderService {
         this.orders = orders;
     }
 
-    public List<Order> latest() {
-        return orders.findTop5ByOrderByOrderedAtDesc();
+    public List<OrderDto> latest() {
+        return orders.findTop5ByOrderByOrderedAtDesc().stream().map(DtoMapper::toOrderDto).toList();
+    }
+
+    /** Same as filterAndSort, but returns DTOs for the view. */
+    public List<OrderDto> search(String week, LocalDate date, DayOfWeek day, Integer hour, String sortBy, boolean descending) {
+        return filterAndSort(week, date, day, hour, sortBy, descending).stream().map(DtoMapper::toOrderDto).toList();
     }
 
     /**

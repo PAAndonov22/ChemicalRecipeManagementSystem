@@ -29,7 +29,7 @@
             <tr th:each="o : ${latestOrders}">
                 <td th:text="${#temporals.format(o.orderedAt, 'dd.MM.yyyy HH:mm')}"></td>
                 <td th:text="${o.customerName}"></td>
-                <td th:text="${o.recipe.name}"></td>
+                <td th:text="${o.recipeName}"></td>
                 <td class="num" th:text="${o.quantity}"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(o.total, 1, 2)} + ' €'"></td>
             </tr>

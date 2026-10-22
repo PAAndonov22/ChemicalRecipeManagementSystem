@@ -5,8 +5,8 @@ import java.time.YearMonth;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.codingburgas.ChemicalRecipeSystem.models.Event;
-import org.codingburgas.ChemicalRecipeSystem.models.PeriodReport;
+import org.codingburgas.ChemicalRecipeSystem.dto.EventDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.PeriodReport;
 import org.codingburgas.ChemicalRecipeSystem.services.PdfService;
 import org.codingburgas.ChemicalRecipeSystem.services.ReportService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -54,7 +54,7 @@ public class ReportController {
         LocalDate selected = date == null ? today : date;
         PeriodReport report = reportService.monthly(months, selected);
         YearMonth calendarMonth = YearMonth.from(report.to());
-        Set<LocalDate> eventDays = report.events().stream().map(Event::getDate).collect(Collectors.toSet());
+        Set<LocalDate> eventDays = report.events().stream().map(EventDto::getDate).collect(Collectors.toSet());
 
         model.addAttribute("report", report);
         model.addAttribute("months", report.rows().size());
