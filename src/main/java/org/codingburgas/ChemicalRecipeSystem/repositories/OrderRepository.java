@@ -10,4 +10,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByOrderedAtBetween(LocalDateTime from, LocalDateTime to);
 
     List<Order> findTop5ByOrderByOrderedAtDesc();
+
+    boolean existsByRecipeId(Long recipeId);
 }

@@ -15,6 +15,7 @@
 
     <form th:action="@{/recipes/save}" th:object="${recipe}" method="post">
         <input type="hidden" th:field="*{id}">
+        <input type="hidden" th:field="*{version}">
 
         <section class="card">
             <h2>Basics</h2>

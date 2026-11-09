@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('Trash')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <a class="back-link" th:href="@{/recipes}"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Back to recipes</a>
+    <div class="page-head"><div><h1>Trash</h1><p class="subtitle">Deleted recipes. Restore them, or delete permanently (not possible when orders exist).</p></div></div>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="card table-wrap">
+        <table>
+            <thead><tr><th scope="col">Code</th><th scope="col">Name</th><th scope="col">Deleted</th><th scope="col">By</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${recipes}">
+                <td class="muted" th:text="${r.code}"></td>
+                <td><span class="cell-title" th:text="${r.name}"></span></td>
+                <td th:text="${#temporals.format(r.deletedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                <td th:text="${r.deletedBy}"></td>
+                <td class="actions">
+                    <form th:action="@{/recipes/{id}/restore(id=${r.id})}" method="post" style="display:inline"><button class="btn light sm" type="submit">Restore</button></form>
+                    <form th:action="@{/recipes/{id}/purge(id=${r.id})}" method="post" style="display:inline" onsubmit="return confirm('Delete permanently? This cannot be undone.')"><button class="btn danger sm" type="submit">Delete permanently</button></form>
+                </td>
+            </tr>
+            <tr th:if="${recipes.isEmpty()}"><td colspan="5" class="empty">The trash is empty.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -5,8 +5,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.codingburgas.ChemicalRecipeSystem.config.CurrentUser;
 import org.codingburgas.ChemicalRecipeSystem.dto.CategoryDto;
+import org.codingburgas.ChemicalRecipeSystem.errors.ConflictException;
+import org.codingburgas.ChemicalRecipeSystem.errors.NotFoundException;
+import org.codingburgas.ChemicalRecipeSystem.models.RecipeStatus;
+import org.codingburgas.ChemicalRecipeSystem.repositories.OrderRepository;
 import org.codingburgas.ChemicalRecipeSystem.dto.DtoMapper;
 import org.codingburgas.ChemicalRecipeSystem.dto.RecipeDto;
 import org.codingburgas.ChemicalRecipeSystem.dto.RecipeForm;
@@ -29,8 +35,13 @@ public class RecipeService {
     private final RecipeRepository recipes;
     private final IngredientRepository ingredients;
     private final CategoryRepository categories;
+    private final AuditService audit;
+    private final OrderRepository orders;
 
-    public RecipeService(RecipeRepository recipes, IngredientRepository ingredients, CategoryRepository categories) {
+    public RecipeService(RecipeRepository recipes, IngredientRepository ingredients, CategoryRepository categories,
+                         AuditService audit, OrderRepository orders) {
+        this.audit = audit;
+        this.orders = orders;
         this.recipes = recipes;
         this.ingredients = ingredients;
         this.categories = categories;
@@ -43,12 +54,12 @@ public class RecipeService {
     }
 
     public RecipeDto get(Long id) {
-        return DtoMapper.toRecipeDto(find(id));
+        return DtoMapper.toRecipeDto(findActive(id));
     }
 
     /** The recipe as a filled form, for the edit page. */
     public RecipeForm getForm(Long id) {
-        return DtoMapper.toRecipeForm(find(id));
+        return DtoMapper.toRecipeForm(findActive(id));
     }
 
     public List<CategoryDto> allCategories() {
@@ -66,7 +77,13 @@ public class RecipeService {
         }
         List<IngredientLine> lines = parseIngredients(form.getIngredients());
 
-        Recipe recipe = form.getId() == null ? new Recipe() : find(form.getId());
+        boolean isNew = form.getId() == null;
+        Recipe recipe = isNew ? new Recipe() : findActive(form.getId());
+        // optimistic locking: the form carries the version it was loaded with
+        if (!isNew && form.getVersion() != null && !form.getVersion().equals(recipe.getVersion())) {
+            throw new ConflictException("This recipe was changed by someone else while you were editing. Your changes were not saved - the page now shows the latest data.");
+        }
+        String before = isNew ? null : describe(recipe);
         String code = form.getCode().trim();
         recipes.findByCode(code)
             .filter(other -> !other.getId().equals(recipe.getId()))
@@ -101,7 +118,62 @@ public class RecipeService {
         sheet.setProtectiveEquipment(form.getProtectiveEquipment());
         sheet.setRevisionDate(LocalDate.now());
 
-        return DtoMapper.toRecipeDto(recipes.save(recipe));
+        if (isNew && CurrentUser.get() == null) {
+            recipe.setStatus(RecipeStatus.APPROVED); // seed / system data needs no review
+        }
+        recipes.saveAndFlush(recipe);
+        String after = describe(recipe);
+        if (isNew) {
+            audit.log("CREATE", "Recipe", recipe.getId(), after);
+        } else if (!after.equals(before)) {
+            audit.log("UPDATE", "Recipe", recipe.getId(), "before: " + before + " | after: " + after);
+        }
+        return DtoMapper.toRecipeDto(recipe);
+    }
+
+    private static String describe(Recipe r) {
+        return r.getCode() + " / " + r.getName() + " / " + r.getPrice() + " EUR / "
+            + r.getIngredients().stream().map(l -> DtoMapper.toRecipeIngredientDto(l).getLabel()).collect(Collectors.joining(", "));
+    }
+
+    /** Soft delete: the recipe goes to the trash, the row stays in the database. */
+    @Transactional
+    public void delete(Long id) {
+        Recipe recipe = findActive(id);
+        recipe.markDeleted(CurrentUser.name());
+        audit.log("DELETE", "Recipe", id, recipe.getCode() + " " + recipe.getName() + " moved to trash");
+    }
+
+    public List<RecipeDto> trash() {
+        return recipes.findByDeletedAtIsNotNullOrderByDeletedAtDesc().stream().map(DtoMapper::toRecipeDto).toList();
+    }
+
+    @Transactional
+    public void restore(Long id) {
+        Recipe recipe = find(id);
+        if (!recipe.isDeleted()) {
+            throw new IllegalArgumentException("This recipe is not in the trash.");
+        }
+        recipe.restore();
+        audit.log("RESTORE", "Recipe", id, recipe.getCode() + " restored from trash");
+    }
+
+    /** Permanent delete - only for recipes already in the trash and without orders. */
+    @Transactional
+    public void purge(Long id) {
+        Recipe recipe = find(id);
+        if (!recipe.isDeleted()) {
+            throw new IllegalArgumentException("Only recipes in the trash can be deleted permanently.");
+        }
+        if (orders.existsByRecipeId(id)) {
+            throw new IllegalArgumentException("This recipe has orders, so it can stay in the trash but not be deleted permanently.");
+        }
+        recipes.delete(recipe);
+        audit.log("PURGE", "Recipe", id, recipe.getCode() + " " + recipe.getName() + " deleted permanently");
+    }
+
+    private Recipe findActive(Long id) {
+        return recipes.findByIdAndDeletedAtIsNull(id).orElseThrow(() -> new NotFoundException("Recipe not found."));
     }
 
     /**
@@ -150,7 +222,7 @@ public class RecipeService {
     }
 
     private Recipe find(Long id) {
-        return recipes.findById(id).orElseThrow(() -> new IllegalArgumentException("Recipe not found."));
+        return recipes.findById(id).orElseThrow(() -> new NotFoundException("Recipe not found."));
     }
 
     private static boolean isBlank(String s) {

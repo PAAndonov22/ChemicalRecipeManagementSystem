@@ -4,12 +4,13 @@
 <body>
 <header th:replace="~{fragments :: nav}"></header>
 <main id="main">
-    <th:block th:with="canEdit=${currentUser.role.name() == 'ADMIN' or currentUser.role.name() == 'CHEMIST'}">
+    <th:block th:with="canEdit=${can.contains('RECIPE_WRITE')}, canDelete=${can.contains('RECIPE_DELETE')}">
     <div class="page-head">
         <div>
             <h1>Recipes</h1>
             <p class="subtitle"><span th:text="${recipes.size()}">0</span> chemical recipes.</p>
         </div>
+        <a class="btn light" th:if="${can.contains('TRASH_MANAGE')}" th:href="@{/recipes/trash}">Trash</a>
         <a class="btn" th:if="${canEdit}" th:href="@{/recipes/new}"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>New recipe</a>
     </div>
     <div th:replace="~{fragments :: alerts}"></div>
@@ -45,6 +46,8 @@
                 </td>
                 <td class="num" th:text="${#numbers.formatDecimal(r.price, 1, 2)} + ' €'"></td>
                 <td class="actions" th:if="${canEdit}">
+                    <form th:if="${canDelete}" th:action="@{/recipes/{id}/delete(id=${r.id})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Move this recipe to the trash?')"><button class="btn light sm" type="submit">Delete</button></form>
                     <a class="btn light sm" th:href="@{/recipes/{id}/edit(id=${r.id})}" th:attr="aria-label='Edit ' + ${r.name}">
                         <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Edit</a>
                 </td>

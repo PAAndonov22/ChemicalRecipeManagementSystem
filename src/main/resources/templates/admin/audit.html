@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('Audit log')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <div class="page-head"><div><h1>Audit log</h1><p class="subtitle">Who changed what and when. Entries cannot be edited or removed.</p></div></div>
+    <section class="card">
+        <form class="filters" th:action="@{/admin/audit}" method="get" role="search">
+            <label>User <input name="user" th:value="${user}" placeholder="name"></label>
+            <label>Record type <select name="entityType"><option value="">All</option><option th:each="t : ${ {'Recipe'} }" th:value="${t}" th:text="${t}" th:selected="${t == entityType}"></option></select></label>
+            <label>From <input type="date" name="from" th:value="${from}"></label>
+            <label>To <input type="date" name="to" th:value="${to}"></label>
+            <button class="btn" type="submit">Filter</button>
+            <a class="btn light" th:href="@{/admin/audit}">Clear</a>
+        </form>
+    </section>
+    <div class="card table-wrap">
+        <table>
+            <thead><tr><th scope="col">When</th><th scope="col">User</th><th scope="col">Action</th><th scope="col">Record</th><th scope="col">Details</th></tr></thead>
+            <tbody>
+            <tr th:each="l : ${logs.content}">
+                <td th:text="${#temporals.format(l.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                <td th:text="${l.username}"></td>
+                <td><span class="badge dot" th:text="${l.action}"></span></td>
+                <td th:text="${l.entityType + ' #' + l.entityId}"></td>
+                <td class="wrap muted" th:text="${l.details}"></td>
+            </tr>
+            <tr th:if="${logs.content.isEmpty()}"><td colspan="5" class="empty">No entries match.</td></tr>
+            </tbody>
+        </table>
+        <nav class="pagination" aria-label="Pagination" th:if="${logs.totalPages > 1}">
+            <a th:if="${logs.hasPrevious()}" th:href="@{/admin/audit(user=${user}, entityType=${entityType}, from=${from}, to=${to}, page=${logs.number - 1})}">&larr; Prev</a>
+            <span class="current" aria-current="page" th:text="${logs.number + 1} + ' / ' + ${logs.totalPages}"></span>
+            <a th:if="${logs.hasNext()}" th:href="@{/admin/audit(user=${user}, entityType=${entityType}, from=${from}, to=${to}, page=${logs.number + 1})}">Next &rarr;</a>
+        </nav>
+    </div>
+</main>
+</body>
+</html>

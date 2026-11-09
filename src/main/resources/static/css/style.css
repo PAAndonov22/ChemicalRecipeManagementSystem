@@ -438,7 +438,7 @@ tbody tr:has(td.empty):hover { background: transparent; }
 .legend i { display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--primary); vertical-align: middle; }
 
 /* ---------- Login ---------- */
-body.login-page { display: block; background: var(--canvas); }
+body.plain, body.login-page { display: block; background: var(--canvas); }
 .login-shell { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); min-height: 100vh; max-width: none; padding: 0; }
 .login-brand { display: flex; flex-direction: column; justify-content: space-between; gap: var(--s8); padding: var(--s10); background: var(--side-bg); color: var(--side-ink); }
 .login-brand .brand { padding: 0; font-size: 1.125rem; }
@@ -519,3 +519,8 @@ body.login-page { display: block; background: var(--canvas); }
     body { display: block; background: #fff; color: #000; }
     .card, .stat { border-color: #ccc; }
 }
+
+.error-card { max-width: 520px; margin: 10vh auto 0; text-align: center; padding: var(--s8); }
+.error-card .btn-row { justify-content: center; margin-top: var(--s5); }
+.error-code { margin: 0; font-size: 3.5rem; font-weight: 700; color: var(--faint); line-height: 1; }
+body.plain main { padding-top: var(--s8); }

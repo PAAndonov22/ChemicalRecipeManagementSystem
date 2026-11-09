@@ -70,6 +70,8 @@
                th:classappend="${currentPath.startsWith('/admin/users/registrations')} ? 'active'"
                th:attr="aria-current=${currentPath.startsWith('/admin/users/registrations')} ? 'page'">
                 <svg class="icon" aria-hidden="true"><use href="#i-user-plus"/></svg>New users</a>
+            <a class="nav-link" th:href="@{/admin/audit}" th:classappend="${currentPath.startsWith('/admin/audit')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/audit')} ? 'page'">
+                <svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg>Audit log</a>
         </th:block>
     </nav>
 

@@ -11,6 +11,7 @@ import org.codingburgas.ChemicalRecipeSystem.models.SignalWord;
  */
 public class RecipeForm {
     private Long id;
+    private Long version;
     private String code;
     private String name;
     private String description;
@@ -24,6 +25,8 @@ public class RecipeForm {
     private String storageConditions;
     private String protectiveEquipment;
 
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getCode() { return code; }
