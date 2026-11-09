@@ -23,6 +23,8 @@ Demo data comes from `MockData.java` and is saved in `data/`. Delete `data/` to 
 > **Upgrading from an older version?** The database tables changed (new entities and relations). Stop the app and delete everything in `data/` except `.gitkeep` once, otherwise startup fails.
 Tests: `./mvnw test`
 
+**Architecture and UML diagrams (Bulgarian):** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
 ## Features
 
 - **Access control**: roles map to permissions (`config/Permissions`), enforced on the server with `@RequirePermission`; missing rights give a 403 page / HTTP 403. ADMIN = everything, CHEMIST = editor, TECHNICIAN / VET / RECEPTION = read-only users.
