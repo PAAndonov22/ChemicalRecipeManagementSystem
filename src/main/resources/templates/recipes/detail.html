@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head(${recipe.name})}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <a class="back-link" th:href="@{/recipes}"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Back to recipes</a>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${recipe.name}">Recipe</h1>
+            <p class="subtitle"><span th:text="${recipe.code}"></span> &middot; <span class="badge dot" th:classappend="${recipe.status}" th:text="${recipe.status}"></span>
+                &middot; <span th:text="${#numbers.formatDecimal(recipe.price, 1, 2)} + ' € / L'"></span></p>
+        </div>
+        <div class="btn-row">
+            <form th:action="@{/recipes/{id}/favorite(id=${recipe.id})}" method="post">
+                <button class="btn light" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>Favorite</button></form>
+            <a class="btn light" th:href="@{/recipes/{id}/history(id=${recipe.id})}">History</a>
+            <a class="btn" th:if="${can.contains('RECIPE_WRITE')}" th:href="@{/recipes/{id}/edit(id=${recipe.id})}">Edit</a>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <div class="two-cols">
+        <section class="card">
+            <h2>Recipe</h2>
+            <p class="muted" th:text="${recipe.description}"></p>
+            <p><span class="tag" th:each="c : ${recipe.categories}" th:text="${c}"></span></p>
+            <ul class="plain"><li th:each="i : ${recipe.ingredients}" th:text="${i.label}"></li></ul>
+            <h2 style="margin-top:1rem" th:if="${recipe.safety != null}">Safety data sheet</h2>
+            <p th:if="${recipe.safety != null}"><span class="badge" th:classappend="${recipe.safety.signalWord}" th:text="${recipe.safety.signalWord}"></span>
+                <span th:text="${recipe.safety.hazardClass}"></span></p>
+        </section>
+
+        <section class="card">
+            <h2>Approval</h2>
+            <form th:each="s : ${nextStatuses}" th:action="@{/recipes/{id}/status(id=${recipe.id})}" method="post" class="filters" style="margin-bottom:.5rem">
+                <input type="hidden" name="to" th:value="${s}">
+                <label class="grow" th:if="${s.name() == 'REJECTED' or s.name() == 'APPROVED'}">Note <input name="note" th:attr="placeholder=${s.name() == 'REJECTED'} ? 'Reason (required)' : 'Optional'"></label>
+                <button class="btn" th:classappend="${s.name() == 'REJECTED'} ? 'danger' : (${s.name() == 'APPROVED'} ? 'success' : 'light')" type="submit" th:text="'Move to ' + ${s.label}">Move</button>
+            </form>
+            <p class="muted" th:if="${nextStatuses.isEmpty()}">Nothing you can do with this status.</p>
+            <ul class="timeline">
+                <li th:each="d : ${decisions}"><b th:text="${d.from.label} + ' → ' + ${d.to.label}"></b> by <span th:text="${d.by}"></span>
+                    <span class="muted" th:text="${#temporals.format(d.at, 'dd.MM.yyyy HH:mm')}"></span>
+                    <div class="muted" th:if="${d.note}" th:text="${d.note}"></div></li>
+            </ul>
+        </section>
+    </div>
+
+    <section class="card">
+        <h2>Files</h2>
+        <ul class="plain">
+            <li th:each="f : ${files}">
+                <a th:if="${f.mine or can.contains('RECIPE_WRITE')}" th:href="@{/attachments/{id}(id=${f.id})}" th:text="${f.name}"></a>
+                <span th:unless="${f.mine or can.contains('RECIPE_WRITE')}" th:text="${f.name}"></span>
+                <span class="muted small" th:text="${#numbers.formatDecimal(f.size / 1024.0, 1, 0)} + ' KB · ' + ${f.uploadedBy}"></span>
+                <form th:if="${f.mine or can.contains('USER_ADMIN')}" th:action="@{/attachments/{id}/delete(id=${f.id})}" method="post" style="display:inline">
+                    <input type="hidden" name="recipeId" th:value="${recipe.id}"><button class="link-btn" type="submit">delete</button></form>
+            </li>
+            <li class="muted" th:if="${files.isEmpty()}">No files yet.</li>
+        </ul>
+        <form th:if="${can.contains('RECIPE_WRITE')}" th:action="@{/recipes/{id}/attachments(id=${recipe.id})}" method="post" enctype="multipart/form-data" class="filters">
+            <label class="grow">PDF, PNG or JPG, up to 5 MB <input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required></label>
+            <button class="btn light" type="submit">Upload</button>
+        </form>
+    </section>
+
+    <section class="card" th:if="${!lists.isEmpty()}">
+        <h2>Add to a list</h2>
+        <div class="btn-row">
+            <form th:each="l : ${lists}" th:action="@{/collections/{id}/add(id=${l.id})}" method="post">
+                <input type="hidden" name="recipeId" th:value="${recipe.id}">
+                <button class="btn light sm" type="submit" th:text="${l.name} + (${inLists.contains(l.id)} ? ' ✓' : '')">List</button></form>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Comments</h2>
+        <form th:action="@{/recipes/{id}/comments(id=${recipe.id})}" method="post" class="stack">
+            <label>Write a comment <textarea name="body" rows="2" maxlength="2000" required></textarea></label>
+            <div><button class="btn" type="submit">Post</button></div>
+        </form>
+        <div class="comment" th:each="c : ${commentPage.content}">
+            <div><b th:text="${c.authorName}"></b> <span class="muted small" th:text="${#temporals.format(c.createdAt, 'dd.MM.yyyy HH:mm')} + (${c.edited} ? ' · edited' : '')"></span></div>
+            <p th:if="${c.deleted}" class="muted">[deleted]</p>
+            <p th:unless="${c.deleted}" th:text="${c.body}"></p>
+            <details th:if="${c.canManage}"><summary>Edit / delete</summary>
+                <form th:action="@{/comments/{id}/edit(id=${c.id})}" method="post" class="stack"><input type="hidden" name="recipeId" th:value="${recipe.id}">
+                    <textarea name="body" rows="2" th:text="${c.body}" required></textarea>
+                    <div class="btn-row"><button class="btn light sm" type="submit">Save</button></div></form>
+                <form th:action="@{/comments/{id}/delete(id=${c.id})}" method="post"><input type="hidden" name="recipeId" th:value="${recipe.id}">
+                    <button class="link-btn" type="submit">Delete comment</button></form>
+            </details>
+            <div class="comment reply" th:each="r : ${c.replies}">
+                <div><b th:text="${r.authorName}"></b> <span class="muted small" th:text="${#temporals.format(r.createdAt, 'dd.MM.yyyy HH:mm')} + (${r.edited} ? ' · edited' : '')"></span></div>
+                <p th:if="${r.deleted}" class="muted">[deleted]</p>
+                <p th:unless="${r.deleted}" th:text="${r.body}"></p>
+                <details th:if="${r.canManage}"><summary>Edit / delete</summary>
+                    <form th:action="@{/comments/{id}/edit(id=${r.id})}" method="post" class="stack"><input type="hidden" name="recipeId" th:value="${recipe.id}">
+                        <textarea name="body" rows="2" th:text="${r.body}" required></textarea><div><button class="btn light sm" type="submit">Save</button></div></form>
+                    <form th:action="@{/comments/{id}/delete(id=${r.id})}" method="post"><input type="hidden" name="recipeId" th:value="${recipe.id}"><button class="link-btn" type="submit">Delete comment</button></form>
+                </details>
+            </div>
+            <details th:unless="${c.deleted}"><summary>Reply</summary>
+                <form th:action="@{/recipes/{id}/comments(id=${recipe.id})}" method="post" class="stack"><input type="hidden" name="parentId" th:value="${c.id}">
+                    <textarea name="body" rows="2" maxlength="2000" required></textarea><div><button class="btn light sm" type="submit">Reply</button></div></form>
+            </details>
+        </div>
+        <p class="muted" th:if="${commentPage.content.isEmpty()}">No comments yet.</p>
+        <nav class="pagination" th:if="${commentPage.totalPages > 1}" aria-label="Comment pages">
+            <a th:if="${commentPage.hasPrevious()}" th:href="@{/recipes/{id}(id=${recipe.id}, cpage=${commentPage.number - 1})}">&larr; Newer</a>
+            <a th:if="${commentPage.hasNext()}" th:href="@{/recipes/{id}(id=${recipe.id}, cpage=${commentPage.number + 1})}">Older &rarr;</a>
+        </nav>
+    </section>
+</main>
+</body>
+</html>

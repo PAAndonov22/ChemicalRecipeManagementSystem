@@ -33,6 +33,10 @@
     <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V7.5L14 3z"/><path d="M14 3v4.5h4.5M9 13h6M9 17h4"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6L12 3z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8L12 3.5z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 8.5l5-5 5 5M5 20h14"/></symbol>
     <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 7.5l3 3"/></symbol>
 </svg>
 
@@ -53,6 +57,11 @@
             <svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Recipes</a>
         <a class="nav-link" th:href="@{/orders}" th:classappend="${currentPath.startsWith('/orders')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/orders')} ? 'page'">
             <svg class="icon" aria-hidden="true"><use href="#i-orders"/></svg>Orders</a>
+
+        <a class="nav-link" th:href="@{/collections}" th:classappend="${currentPath.startsWith('/collections')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/collections')} ? 'page'">
+            <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>My lists</a>
+        <a class="nav-link" th:href="@{/notifications}" th:classappend="${currentPath.startsWith('/notifications')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/notifications')} ? 'page'">
+            <svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>Notifications<span class="nav-count" th:if="${unreadCount > 0}" th:text="${unreadCount}">3</span></a>
 
         <p class="nav-label">Analysis</p>
         <a class="nav-link" th:href="@{/reports}" th:classappend="${currentPath.startsWith('/reports')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/reports')} ? 'page'">
@@ -76,6 +85,7 @@
     </nav>
 
     <div class="sidebar-user">
+        <a class="icon-btn" th:href="@{/settings}" title="Settings" aria-label="Settings"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg></a>
         <a class="user-chip" th:href="@{/profile}" title="My profile">
             <span class="avatar" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(currentUser.fullName, 0, 1))}">A</span>
             <span class="user-meta"><b th:text="${currentUser.fullName}">Name</b><small th:text="${currentUser.role}">ROLE</small></span>
@@ -85,6 +95,13 @@
         </form>
     </div>
 </header>
+
+<!-- Pager: pass a Spring Page. Keeps the current filters from the query string. -->
+<nav th:fragment="pager" class="pagination" aria-label="Pagination" th:if="${pager != null and pager.totalPages > 1}">
+    <a th:if="${pager.hasPrevious()}" th:href="${currentPath + '?' + qs + (qs.isEmpty() ? '' : '&') + 'page=' + (pager.number - 1)}">&larr; Prev</a>
+    <span class="current" aria-current="page" th:text="${pager.number + 1} + ' / ' + ${pager.totalPages}"></span>
+    <a th:if="${pager.hasNext()}" th:href="${currentPath + '?' + qs + (qs.isEmpty() ? '' : '&') + 'page=' + (pager.number + 1)}">Next &rarr;</a>
+</nav>
 
 <div th:fragment="alerts">
     <div class="alert error" role="alert" th:if="${error}">

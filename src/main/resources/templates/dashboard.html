@@ -7,19 +7,36 @@
     <div class="page-head">
         <div>
             <h1>Hello, <span th:text="${currentUser.fullName}">user</span></h1>
-            <p class="subtitle">This month at a glance.</p>
+            <p class="subtitle">Key numbers for the last <span th:text="${months}">6</span> month(s).</p>
         </div>
-        <!-- Separate button that leads to the reports -->
-        <a class="btn" th:href="@{/reports/monthly}"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Open reports</a>
+        <form th:action="@{/}" method="get" class="filters">
+            <label>Period
+                <select name="months" onchange="this.form.submit()">
+                    <option value="1" th:selected="${months == 1}">1 month</option>
+                    <option value="6" th:selected="${months == 6}">6 months</option>
+                    <option value="12" th:selected="${months == 12}">12 months</option>
+                </select>
+            </label>
+            <noscript><button class="btn" type="submit">Show</button></noscript>
+        </form>
     </div>
     <div th:replace="~{fragments :: alerts}"></div>
 
     <div class="grid">
-        <div class="stat"><div class="label">Revenue this month</div><div class="value" th:text="${#numbers.formatDecimal(thisMonth.totalRevenue(), 1, 2)} + ' €'">0</div></div>
-        <div class="stat teal"><div class="label">Orders this month</div><div class="value" th:text="${thisMonth.totalOrders()}">0</div></div>
-        <div class="stat amber"><div class="label">Events this month</div><div class="value" th:text="${thisMonth.totalEvents()}">0</div></div>
-        <div class="stat green"><div class="label">New users this week</div><div class="value" th:text="${registrations['week']}">0</div></div>
+        <div class="stat"><div class="label">Revenue</div><div class="value" th:text="${#numbers.formatDecimal(stats.revenue, 1, 2)} + ' €'">0</div></div>
+        <div class="stat teal"><div class="label">Orders</div><div class="value" th:text="${stats.orders}">0</div></div>
+        <div class="stat amber"><div class="label">Events</div><div class="value" th:text="${stats.events}">0</div></div>
+        <div class="stat green"><div class="label">Recipes (in review: <span th:text="${stats.inReview}">0</span>)</div><div class="value" th:text="${stats.recipes}">0</div></div>
     </div>
+
+    <div class="two-cols">
+        <section class="card"><h2>Revenue per month (€)</h2>
+            <div class="chart-box"><canvas id="revenueChart" role="img" aria-label="Bar chart of revenue per month. The same numbers are on the Reports page."></canvas></div></section>
+        <section class="card"><h2>Revenue by category (€)</h2>
+            <div class="chart-box"><canvas id="categoryChart" role="img" aria-label="Doughnut chart of order revenue by recipe category."></canvas></div></section>
+    </div>
+    <section class="card"><h2>Recipes by status</h2>
+        <div class="chart-box" style="height:200px"><canvas id="statusChart" role="img" aria-label="Bar chart of the number of recipes in each approval status."></canvas></div></section>
 
     <div class="card table-wrap">
         <div class="card-head">
@@ -41,5 +58,25 @@
         </table>
     </div>
 </main>
+<script th:src="@{/js/chart.umd.js}"></script>
+<script th:inline="javascript">
+    var d = /*[[${chartData}]]*/ {};
+    var css = getComputedStyle(document.documentElement);
+    var ink = css.getPropertyValue('--muted').trim();
+    var grid = css.getPropertyValue('--border').trim();
+    var palette = ['--primary', '--info', '--warning', '--success', '--danger', '--faint'].map(function (v) { return css.getPropertyValue(v).trim(); });
+    Chart.defaults.color = ink;
+    Chart.defaults.font.family = css.getPropertyValue('--font') || 'sans-serif';
+    var scales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: grid } } };
+    new Chart(document.getElementById('revenueChart'), { type: 'bar',
+        data: { labels: d.monthLabels, datasets: [{ data: d.monthRevenue, backgroundColor: palette[0], borderRadius: 4 }] },
+        options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales } });
+    new Chart(document.getElementById('categoryChart'), { type: 'doughnut',
+        data: { labels: d.categoryLabels, datasets: [{ data: d.categoryRevenue, backgroundColor: palette, borderWidth: 0 }] },
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+    new Chart(document.getElementById('statusChart'), { type: 'bar',
+        data: { labels: d.statusLabels, datasets: [{ data: d.statusCounts, backgroundColor: palette[1], borderRadius: 4 }] },
+        options: { maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid } }, y: { grid: { display: false } } } } });
+</script>
 </body>
 </html>

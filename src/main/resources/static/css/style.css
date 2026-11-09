@@ -524,3 +524,15 @@ body.plain, body.login-page { display: block; background: var(--canvas); }
 .error-card .btn-row { justify-content: center; margin-top: var(--s5); }
 .error-code { margin: 0; font-size: 3.5rem; font-weight: 700; color: var(--faint); line-height: 1; }
 body.plain main { padding-top: var(--s8); }
+
+/* ---------- recipe page extras ---------- */
+ul.plain { margin: 0 0 var(--s3); padding: 0; list-style: none; }
+ul.plain li { padding: 4px 0; }
+.timeline { margin: var(--s3) 0 0; padding: 0; list-style: none; border-left: 2px solid var(--border); }
+.timeline li { padding: 0 0 var(--s3) var(--s3); }
+.comment { padding: var(--s3) 0; border-top: 1px solid var(--border); }
+.comment.reply { margin-left: var(--s6); padding-left: var(--s3); border-left: 2px solid var(--border); border-top: 0; }
+.comment details { margin-top: var(--s1); }
+.comment summary { cursor: pointer; color: var(--muted); font-size: .8125rem; }
+tr.changed td { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); }
+.chart-box { position: relative; height: 260px; }

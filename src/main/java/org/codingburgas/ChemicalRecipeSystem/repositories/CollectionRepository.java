@@ -11,5 +11,8 @@ public interface CollectionRepository extends JpaRepository<RecipeCollection, Lo
 
     Optional<RecipeCollection> findByIdAndOwnerId(Long id, Long ownerId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM RecipeCollection c JOIN c.recipes r WHERE r.id = :recipeId")
+    List<RecipeCollection> findContaining(Long recipeId);
+
     Optional<RecipeCollection> findByOwnerIdAndName(Long ownerId, String name);
 }

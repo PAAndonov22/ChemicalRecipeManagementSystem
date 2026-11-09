@@ -11,6 +11,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecificationExecutor<Recipe> {
     List<Recipe> findByNameContainingIgnoreCaseAndDeletedAtIsNullOrderByName(String name);
 
+    @org.springframework.data.jpa.repository.Query("SELECT r.status, COUNT(r) FROM Recipe r WHERE r.deletedAt IS NULL GROUP BY r.status")
+    List<Object[]> countByStatus();
+
     Optional<Recipe> findByCode(String code);
 
     Optional<Recipe> findByIdAndDeletedAtIsNull(Long id);

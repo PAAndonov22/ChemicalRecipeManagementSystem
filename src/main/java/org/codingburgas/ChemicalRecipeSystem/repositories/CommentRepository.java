@@ -14,4 +14,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByParentInOrderByCreatedAtAsc(Collection<Comment> parents);
 
     long countByRecipeIdAndDeletedFalse(Long recipeId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Comment c SET c.parent = null WHERE c.recipe.id = :recipeId")
+    void detachReplies(Long recipeId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Comment c WHERE c.recipe.id = :recipeId")
+    void deleteAllFor(Long recipeId);
 }

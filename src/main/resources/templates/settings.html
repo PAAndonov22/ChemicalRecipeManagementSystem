@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('Settings')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <div class="page-head"><div><h1>Settings</h1><p class="subtitle">Saved for your account, also after you log out.</p></div></div>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <section class="card">
+        <form th:action="@{/settings}" method="post" class="form-grid">
+            <label>Theme <select name="theme"><option th:each="t : ${themes}" th:value="${t}" th:text="${t}" th:selected="${t == session.prefs.theme}"></option></select></label>
+            <label>Rows per page <select name="pageSize"><option th:each="s : ${sizes}" th:value="${s}" th:text="${s}" th:selected="${s == session.prefs.pageSize}"></option></select></label>
+            <fieldset class="full checks"><legend>Notify me about</legend>
+                <label><input type="checkbox" name="notifyStatus" value="true" th:checked="${session.prefs.notifyStatus}"> Status changes and new recipes</label>
+                <label><input type="checkbox" name="notifyComments" value="true" th:checked="${session.prefs.notifyComments}"> Comments and replies</label></fieldset>
+            <div class="full form-actions"><button class="btn" type="submit">Save settings</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

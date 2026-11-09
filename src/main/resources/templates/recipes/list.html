@@ -8,18 +8,38 @@
     <div class="page-head">
         <div>
             <h1>Recipes</h1>
-            <p class="subtitle"><span th:text="${recipes.size()}">0</span> chemical recipes.</p>
+            <p class="subtitle"><span th:text="${recipePage.totalElements}">0</span> chemical recipes.</p>
         </div>
-        <a class="btn light" th:if="${can.contains('TRASH_MANAGE')}" th:href="@{/recipes/trash}">Trash</a>
-        <a class="btn" th:if="${canEdit}" th:href="@{/recipes/new}"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>New recipe</a>
+        <div class="btn-row">
+            <a class="btn light" th:href="${'/recipes/export?format=csv&' + qs}">CSV</a>
+            <a class="btn light" th:href="${'/recipes/export?format=xlsx&' + qs}">Excel</a>
+            <a class="btn light" th:if="${canEdit}" th:href="@{/recipes/import}"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>Import</a>
+            <a class="btn light" th:if="${can.contains('TRASH_MANAGE')}" th:href="@{/recipes/trash}">Trash</a>
+            <a class="btn" th:if="${canEdit}" th:href="@{/recipes/new}"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>New recipe</a>
+        </div>
     </div>
     <div th:replace="~{fragments :: alerts}"></div>
 
     <div class="card">
         <form class="filters" th:action="@{/recipes}" method="get" role="search">
-            <label class="grow">Search by name <input type="search" name="q" th:value="${q}" placeholder="e.g. spray, gel, disinfectant"></label>
+            <label class="grow">Name or code <input type="search" name="q" th:value="${search.q}" placeholder="e.g. spray, RX-1005"></label>
+            <label>Category
+                <select name="categoryId"><option value="">Any</option>
+                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == search.categoryId}"></option></select></label>
+            <label>Signal word
+                <select name="signalWord"><option value="">Any</option>
+                    <option th:each="w : ${signalWords}" th:value="${w}" th:text="${w}" th:selected="${w == search.signalWord}"></option></select></label>
+            <label>Status
+                <select name="status"><option value="">Any</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${s == search.status}"></option></select></label>
+            <label>Min price <input type="number" step="0.01" name="minPrice" th:value="${search.minPrice}"></label>
+            <label>Max price <input type="number" step="0.01" name="maxPrice" th:value="${search.maxPrice}"></label>
+            <label>Sort by
+                <select name="sort"><option th:each="s : ${ {'name', 'code', 'price', 'status', 'createdAt'} }" th:value="${s}" th:text="${s}" th:selected="${s == sort}"></option></select></label>
+            <label>Direction
+                <select name="dir"><option value="asc" th:selected="${dir == 'asc'}">Ascending</option><option value="desc" th:selected="${dir == 'desc'}">Descending</option></select></label>
             <button class="btn" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Search</button>
-            <a class="btn light" th:if="${!q.isEmpty()}" th:href="@{/recipes}">Clear</a>
+            <a class="btn light" th:href="@{/recipes}">Clear</a>
         </form>
     </div>
 
@@ -27,17 +47,17 @@
         <table>
             <thead>
             <tr>
-                <th scope="col">Code</th><th scope="col">Name</th><th scope="col">Categories</th>
-                <th scope="col">Ingredients (per L)</th><th scope="col">Safety</th><th scope="col" class="num">Price / L</th>
-                <th scope="col" th:if="${canEdit}"><span class="visually-hidden">Actions</span></th>
+                <th scope="col">Code</th><th scope="col">Name</th><th scope="col">Status</th><th scope="col">Categories</th>
+                <th scope="col">Safety</th><th scope="col" class="num">Price / L</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="r : ${recipes}">
                 <td class="muted" th:text="${r.code}"></td>
-                <td><span class="cell-title" th:text="${r.name}"></span></td>
+                <td><a class="cell-title" th:href="@{/recipes/{id}(id=${r.id})}" th:text="${r.name}"></a></td>
+                <td><span class="badge dot" th:classappend="${r.status}" th:text="${r.status}"></span></td>
                 <td><span class="tag" th:each="c : ${r.categories}" th:text="${c}"></span></td>
-                <td class="wrap" th:text="${r.ingredientsText}"></td>
                 <td class="wrap">
                     <th:block th:if="${r.safety != null}">
                         <span class="badge" th:classappend="${r.safety.signalWord}" th:text="${r.safety.signalWord}"></span>
@@ -45,16 +65,17 @@
                     </th:block>
                 </td>
                 <td class="num" th:text="${#numbers.formatDecimal(r.price, 1, 2)} + ' €'"></td>
-                <td class="actions" th:if="${canEdit}">
+                <td class="actions">
                     <form th:if="${canDelete}" th:action="@{/recipes/{id}/delete(id=${r.id})}" method="post" style="display:inline"
                           onsubmit="return confirm('Move this recipe to the trash?')"><button class="btn light sm" type="submit">Delete</button></form>
-                    <a class="btn light sm" th:href="@{/recipes/{id}/edit(id=${r.id})}" th:attr="aria-label='Edit ' + ${r.name}">
+                    <a class="btn light sm" th:if="${canEdit}" th:href="@{/recipes/{id}/edit(id=${r.id})}" th:attr="aria-label='Edit ' + ${r.name}">
                         <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Edit</a>
                 </td>
             </tr>
-            <tr th:if="${recipes.isEmpty()}"><td colspan="7" class="empty">No recipes match &ldquo;<span th:text="${q}"></span>&rdquo;.</td></tr>
+            <tr th:if="${recipes.isEmpty()}"><td colspan="7" class="empty">No recipes match these filters.</td></tr>
             </tbody>
         </table>
+        <th:block th:replace="~{fragments :: pager}"></th:block>
     </div>
     </th:block>
 </main>

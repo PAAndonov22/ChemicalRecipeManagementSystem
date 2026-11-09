@@ -27,6 +27,12 @@ import jakarta.servlet.http.HttpSession;
 public class GlobalControllerAdvice {
     private static final Logger log = LoggerFactory.getLogger(GlobalControllerAdvice.class);
 
+    private final org.codingburgas.ChemicalRecipeSystem.services.NotificationService notifications;
+
+    public GlobalControllerAdvice(org.codingburgas.ChemicalRecipeSystem.services.NotificationService notifications) {
+        this.notifications = notifications;
+    }
+
     @ModelAttribute("currentUser")
     public UserDto currentUser(HttpSession session) {
         return (UserDto) session.getAttribute("user");
@@ -35,6 +41,26 @@ public class GlobalControllerAdvice {
     @ModelAttribute("currentPath")
     public String currentPath(HttpServletRequest request) {
         return request.getRequestURI();
+    }
+
+    /** "light" / "dark" from the user's settings; null = follow the operating system. */
+    @ModelAttribute("uiTheme")
+    public String uiTheme(HttpSession session) {
+        var prefs = (org.codingburgas.ChemicalRecipeSystem.dto.PreferencesDto) session.getAttribute("prefs");
+        return prefs == null || prefs.theme() == org.codingburgas.ChemicalRecipeSystem.models.Theme.SYSTEM ? null : prefs.theme().name().toLowerCase();
+    }
+
+    @ModelAttribute("unreadCount")
+    public long unreadCount(HttpSession session) {
+        UserDto user = (UserDto) session.getAttribute("user");
+        return user == null ? 0 : notifications.unread(user.getId());
+    }
+
+    /** The current query string without "page" - the pager appends its own page number. */
+    @ModelAttribute("qs")
+    public String queryWithoutPage(HttpServletRequest request) {
+        String query = request.getQueryString();
+        return query == null ? "" : java.util.Arrays.stream(query.split("&")).filter(p -> !p.isEmpty() && !p.startsWith("page=")).collect(java.util.stream.Collectors.joining("&"));
     }
 
     /** Names of the permissions of the logged in user, e.g. can.contains('RECIPE_WRITE') in templates. */
@@ -56,6 +82,11 @@ public class GlobalControllerAdvice {
         String message = exception instanceof ConflictException ? exception.getMessage()
             : "This record was changed by someone else at the same time. Please reload and try again.";
         return backWithError(message, request);
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public String handleTooBig(HttpServletRequest request) {
+        return backWithError("The file is larger than 5 MB.", request);
     }
 
     @ExceptionHandler(NotFoundException.class)

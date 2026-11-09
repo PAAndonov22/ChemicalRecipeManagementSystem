@@ -6,7 +6,12 @@ import org.codingburgas.ChemicalRecipeSystem.dto.RecipeDto;
 import org.codingburgas.ChemicalRecipeSystem.dto.RecipeForm;
 import org.codingburgas.ChemicalRecipeSystem.models.SignalWord;
 import org.codingburgas.ChemicalRecipeSystem.services.RecipeService;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
+import jakarta.servlet.http.HttpSession;
+import org.codingburgas.ChemicalRecipeSystem.dto.PreferencesDto;
+import org.codingburgas.ChemicalRecipeSystem.dto.RecipeSearch;
+import org.codingburgas.ChemicalRecipeSystem.models.RecipeStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -26,9 +31,19 @@ public class RecipeController {
 
     @GetMapping("/recipes")
     @RequirePermission(Permission.RECIPE_READ)
-    public String list(@RequestParam(defaultValue = "") String q, Model model) {
-        model.addAttribute("recipes", recipeService.search(q));
-        model.addAttribute("q", q);
+    public String list(@ModelAttribute("search") RecipeSearch search, @RequestParam(defaultValue = "name") String sort,
+                       @RequestParam(defaultValue = "asc") String dir, @RequestParam(defaultValue = "0") int page,
+                       HttpSession session, Model model) {
+        PreferencesDto prefs = (PreferencesDto) session.getAttribute("prefs");
+        Page<RecipeDto> result = recipeService.search(search, sort, dir, page, prefs == null ? 10 : prefs.pageSize());
+        model.addAttribute("recipes", result.getContent());
+        model.addAttribute("recipePage", result);
+        model.addAttribute("pager", result);
+        model.addAttribute("categories", recipeService.allCategories());
+        model.addAttribute("signalWords", SignalWord.values());
+        model.addAttribute("statuses", RecipeStatus.values());
+        model.addAttribute("sort", sort);
+        model.addAttribute("dir", dir);
         return "recipes/list";
     }
 
