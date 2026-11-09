@@ -50,42 +50,23 @@
     </a>
 
     <nav class="nav" aria-label="Main">
-        <p class="nav-label">Workspace</p>
-        <a class="nav-link" th:href="@{/}" th:classappend="${currentPath == '/'} ? 'active'" th:attr="aria-current=${currentPath == '/'} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>Dashboard</a>
-        <a class="nav-link" th:href="@{/recipes}" th:classappend="${currentPath.startsWith('/recipes')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/recipes')} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>Recipes</a>
-        <a class="nav-link" th:href="@{/orders}" th:classappend="${currentPath.startsWith('/orders')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/orders')} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-orders"/></svg>Orders</a>
-
-        <a class="nav-link" th:href="@{/collections}" th:classappend="${currentPath.startsWith('/collections')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/collections')} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>My lists</a>
-        <a class="nav-link" th:href="@{/notifications}" th:classappend="${currentPath.startsWith('/notifications')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/notifications')} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>Notifications<span class="nav-count" th:if="${unreadCount > 0}" th:text="${unreadCount}">3</span></a>
-
-        <p class="nav-label">Analysis</p>
-        <a class="nav-link" th:href="@{/reports}" th:classappend="${currentPath.startsWith('/reports')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/reports')} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Reports</a>
-        <a class="nav-link" th:href="@{/insights}" th:classappend="${currentPath.startsWith('/insights')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/insights')} ? 'page'">
-            <svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg>AI Insights</a>
-
+        <a class="nav-link" th:href="@{/}" th:classappend="${currentPath == '/'} ? 'active'" th:attr="aria-current=${currentPath == '/'} ? 'page'">Dashboard</a>
+        <a class="nav-link" th:href="@{/recipes}" th:classappend="${currentPath.startsWith('/recipes')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/recipes')} ? 'page'">Recipes</a>
+        <a class="nav-link" th:href="@{/orders}" th:classappend="${currentPath.startsWith('/orders')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/orders')} ? 'page'">Orders</a>
+        <a class="nav-link" th:href="@{/reports}" th:classappend="${currentPath.startsWith('/reports')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/reports')} ? 'page'">Reports</a>
+        <a class="nav-link" th:href="@{/insights}" th:classappend="${currentPath.startsWith('/insights')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/insights')} ? 'page'">AI Insights</a>
         <th:block th:if="${currentUser.role.name() == 'ADMIN'}">
-            <p class="nav-label">Administration</p>
-            <a class="nav-link" th:href="@{/admin/users}"
-               th:classappend="${currentPath.startsWith('/admin/users') and !currentPath.startsWith('/admin/users/registrations')} ? 'active'"
-               th:attr="aria-current=${currentPath.startsWith('/admin/users') and !currentPath.startsWith('/admin/users/registrations')} ? 'page'">
-                <svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>Users</a>
-            <a class="nav-link" th:href="@{/admin/users/registrations}"
-               th:classappend="${currentPath.startsWith('/admin/users/registrations')} ? 'active'"
-               th:attr="aria-current=${currentPath.startsWith('/admin/users/registrations')} ? 'page'">
-                <svg class="icon" aria-hidden="true"><use href="#i-user-plus"/></svg>New users</a>
-            <a class="nav-link" th:href="@{/admin/audit}" th:classappend="${currentPath.startsWith('/admin/audit')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/audit')} ? 'page'">
-                <svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg>Audit log</a>
+        <a class="nav-link" th:href="@{/admin/users}" th:classappend="${currentPath.startsWith('/admin/users') and !currentPath.startsWith('/admin/users/registrations')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/users') and !currentPath.startsWith('/admin/users/registrations')} ? 'page'">Users</a>
+        <a class="nav-link" th:href="@{/admin/users/registrations}" th:classappend="${currentPath.startsWith('/admin/users/registrations')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/users/registrations')} ? 'page'">New users</a>
+        <a class="nav-link" th:href="@{/admin/audit}" th:classappend="${currentPath.startsWith('/admin/audit')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/audit')} ? 'page'">Audit log</a>
         </th:block>
     </nav>
 
     <div class="sidebar-user">
-        <a class="icon-btn" th:href="@{/settings}" title="Settings" aria-label="Settings"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg></a>
+        <a class="icon-btn" th:classappend="${currentPath.startsWith('/collections')} ? 'active'" th:href="@{/collections}" title="My lists" aria-label="My lists"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></a>
+        <a class="icon-btn" th:classappend="${currentPath.startsWith('/notifications')} ? 'active'" th:href="@{/notifications}" title="Notifications" th:attr="aria-label='Notifications' + (${unreadCount > 0} ? ', ' + ${unreadCount} + ' unread' : '')">
+            <svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg><span class="nav-count" th:if="${unreadCount > 0}" th:text="${unreadCount}">3</span></a>
+        <a class="icon-btn" th:classappend="${currentPath.startsWith('/settings')} ? 'active'" th:href="@{/settings}" title="Settings" aria-label="Settings"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg></a>
         <a class="user-chip" th:href="@{/profile}" title="My profile">
             <span class="avatar" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(currentUser.fullName, 0, 1))}">A</span>
             <span class="user-meta"><b th:text="${currentUser.fullName}">Name</b><small th:text="${currentUser.role}">ROLE</small></span>

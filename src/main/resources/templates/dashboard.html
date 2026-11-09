@@ -26,7 +26,7 @@
         <div class="stat"><div class="label">Revenue</div><div class="value" th:text="${#numbers.formatDecimal(stats.revenue, 1, 2)} + ' €'">0</div></div>
         <div class="stat teal"><div class="label">Orders</div><div class="value" th:text="${stats.orders}">0</div></div>
         <div class="stat amber"><div class="label">Events</div><div class="value" th:text="${stats.events}">0</div></div>
-        <div class="stat green"><div class="label">Recipes (in review: <span th:text="${stats.inReview}">0</span>)</div><div class="value" th:text="${stats.recipes}">0</div></div>
+        <div class="stat green"><div class="label" th:text="'Recipes · ' + ${stats.inReview} + ' in review'">Recipes</div><div class="value" th:text="${stats.recipes}">0</div></div>
     </div>
 
     <div class="two-cols">
@@ -64,7 +64,8 @@
     var css = getComputedStyle(document.documentElement);
     var ink = css.getPropertyValue('--muted').trim();
     var grid = css.getPropertyValue('--border').trim();
-    var palette = ['--primary', '--info', '--warning', '--success', '--danger', '--faint'].map(function (v) { return css.getPropertyValue(v).trim(); });
+    var palette = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5', '--chart-6'].map(function (v) { return css.getPropertyValue(v).trim(); });
+    Chart.defaults.animation = false; // static, accessible, same look in screenshots
     Chart.defaults.color = ink;
     Chart.defaults.font.family = css.getPropertyValue('--font') || 'sans-serif';
     var scales = { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: grid } } };
