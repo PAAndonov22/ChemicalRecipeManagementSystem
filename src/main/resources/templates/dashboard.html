@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
 <head th:replace="~{fragments :: head('Dashboard')}"></head>
 <body>
 <header th:replace="~{fragments :: nav}"></header>
-<main>
+<main id="main">
     <div class="page-head">
         <div>
-            <h1>Hello, <span th:text="${currentUser.fullName}">user</span> &#128075;</h1>
+            <h1>Hello, <span th:text="${currentUser.fullName}">user</span></h1>
             <p class="subtitle">This month at a glance.</p>
         </div>
         <!-- Separate button that leads to the reports -->
-        <a class="btn big" th:href="@{/reports/monthly}">&#128202; Open reports</a>
+        <a class="btn" th:href="@{/reports/monthly}"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Open reports</a>
     </div>
     <div th:replace="~{fragments :: alerts}"></div>
 
@@ -22,9 +22,12 @@
     </div>
 
     <div class="card table-wrap">
-        <h2>Latest orders</h2>
+        <div class="card-head">
+            <h2>Latest orders</h2>
+            <a class="btn light sm" th:href="@{/orders}">All orders<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+        </div>
         <table>
-            <thead><tr><th>Date</th><th>Customer</th><th>Recipe</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>
+            <thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Recipe</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Total</th></tr></thead>
             <tbody>
             <tr th:each="o : ${latestOrders}">
                 <td th:text="${#temporals.format(o.orderedAt, 'dd.MM.yyyy HH:mm')}"></td>
@@ -33,9 +36,9 @@
                 <td class="num" th:text="${o.quantity}"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(o.total, 1, 2)} + ' €'"></td>
             </tr>
+            <tr th:if="${latestOrders.isEmpty()}"><td colspan="5" class="empty">No orders yet.</td></tr>
             </tbody>
         </table>
-        <p><a th:href="@{/orders}">All orders &rarr;</a></p>
     </div>
 </main>
 </body>

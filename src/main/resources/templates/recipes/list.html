@@ -1,44 +1,55 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
 <head th:replace="~{fragments :: head('Recipes')}"></head>
 <body>
 <header th:replace="~{fragments :: nav}"></header>
-<main>
+<main id="main">
     <th:block th:with="canEdit=${currentUser.role.name() == 'ADMIN' or currentUser.role.name() == 'CHEMIST'}">
     <div class="page-head">
         <div>
             <h1>Recipes</h1>
             <p class="subtitle"><span th:text="${recipes.size()}">0</span> chemical recipes.</p>
         </div>
-        <a class="btn" th:if="${canEdit}" th:href="@{/recipes/new}">+ New recipe</a>
+        <a class="btn" th:if="${canEdit}" th:href="@{/recipes/new}"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>New recipe</a>
     </div>
     <div th:replace="~{fragments :: alerts}"></div>
 
     <div class="card">
-        <form class="filters" th:action="@{/recipes}" method="get">
-            <label>Search by name <input name="q" th:value="${q}"></label>
-            <button class="btn">Search</button>
+        <form class="filters" th:action="@{/recipes}" method="get" role="search">
+            <label class="grow">Search by name <input type="search" name="q" th:value="${q}" placeholder="e.g. spray, gel, disinfectant"></label>
+            <button class="btn" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Search</button>
+            <a class="btn light" th:if="${!q.isEmpty()}" th:href="@{/recipes}">Clear</a>
         </form>
     </div>
 
     <div class="card table-wrap">
         <table>
-            <thead><tr><th>Code</th><th>Name</th><th>Categories</th><th>Ingredients (per L)</th><th>Safety</th><th class="num">Price / L</th><th th:if="${canEdit}"></th></tr></thead>
+            <thead>
+            <tr>
+                <th scope="col">Code</th><th scope="col">Name</th><th scope="col">Categories</th>
+                <th scope="col">Ingredients (per L)</th><th scope="col">Safety</th><th scope="col" class="num">Price / L</th>
+                <th scope="col" th:if="${canEdit}"><span class="visually-hidden">Actions</span></th>
+            </tr>
+            </thead>
             <tbody>
             <tr th:each="r : ${recipes}">
-                <td th:text="${r.code}"></td>
-                <td><b th:text="${r.name}"></b></td>
+                <td class="muted" th:text="${r.code}"></td>
+                <td><span class="cell-title" th:text="${r.name}"></span></td>
                 <td><span class="tag" th:each="c : ${r.categories}" th:text="${c}"></span></td>
-                <td th:text="${r.ingredientsText}" style="white-space: normal"></td>
-                <td style="white-space: normal">
+                <td class="wrap" th:text="${r.ingredientsText}"></td>
+                <td class="wrap">
                     <th:block th:if="${r.safety != null}">
                         <span class="badge" th:classappend="${r.safety.signalWord}" th:text="${r.safety.signalWord}"></span>
-                        <div class="muted small" th:text="${r.safety.hazardClass}"></div>
+                        <span class="cell-sub" th:text="${r.safety.hazardClass}"></span>
                     </th:block>
                 </td>
                 <td class="num" th:text="${#numbers.formatDecimal(r.price, 1, 2)} + ' €'"></td>
-                <td th:if="${canEdit}"><a th:href="@{/recipes/{id}/edit(id=${r.id})}">Edit</a></td>
+                <td class="actions" th:if="${canEdit}">
+                    <a class="btn light sm" th:href="@{/recipes/{id}/edit(id=${r.id})}" th:attr="aria-label='Edit ' + ${r.name}">
+                        <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Edit</a>
+                </td>
             </tr>
+            <tr th:if="${recipes.isEmpty()}"><td colspan="7" class="empty">No recipes match &ldquo;<span th:text="${q}"></span>&rdquo;.</td></tr>
             </tbody>
         </table>
     </div>
