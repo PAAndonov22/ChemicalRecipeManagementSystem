@@ -37,7 +37,7 @@ public class RecipeService {
     }
 
     public List<RecipeDto> search(String name) {
-        return recipes.findByNameContainingIgnoreCaseOrderByName(name.trim()).stream()
+        return recipes.findByNameContainingIgnoreCaseAndDeletedAtIsNullOrderByName(name.trim()).stream()
             .map(DtoMapper::toRecipeDto)
             .toList();
     }

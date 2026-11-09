@@ -120,7 +120,7 @@ public class IntelligenceService {
 
     /** For every recipe: the most similar other recipe by ingredients. */
     public List<Recommendation> recommendations() {
-        List<Recipe> all = recipes.findAll();
+        List<Recipe> all = recipes.findByDeletedAtIsNullOrderByName();
         List<Recommendation> result = new ArrayList<>();
         for (Recipe recipe : all) {
             all.stream()
@@ -147,7 +147,7 @@ public class IntelligenceService {
     // ---------- 4. Expert system ----------
 
     public List<HazardAssessment> hazardAssessments() {
-        return recipes.findAll().stream()
+        return recipes.findByDeletedAtIsNullOrderByName().stream()
             .map(IntelligenceService::assessHazard)
             .sorted(Comparator.comparingInt(HazardAssessment::score).reversed())
             .toList();
