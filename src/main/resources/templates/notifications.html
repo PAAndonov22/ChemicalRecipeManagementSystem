@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('Notifications')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <div class="page-head"><div><h1>Notifications</h1><p class="subtitle">Only your own notifications are shown.</p></div>
+        <form th:action="@{/notifications/read-all}" method="post"><button class="btn light" type="submit">Mark all as read</button></form></div>
+    <div class="card table-wrap">
+        <table><tbody>
+            <tr th:each="n : ${items.content}" th:classappend="${n.seen} ? 'inactive'">
+                <td><span class="badge dot" th:classappend="${n.seen} ? 'off' : 'on'" th:text="${n.seen} ? 'Read' : 'New'"></span></td>
+                <td class="wrap"><a th:href="${n.link}" th:text="${n.message}"></a></td>
+                <td class="muted" th:text="${#temporals.format(n.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                <td class="actions"><form th:unless="${n.seen}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post"><button class="btn light sm" type="submit">Mark read</button></form></td></tr>
+            <tr th:if="${items.content.isEmpty()}"><td class="empty">No notifications.</td></tr>
+        </tbody></table>
+        <th:block th:replace="~{fragments :: pager}"></th:block>
+    </div>
+</main>
+</body>
+</html>

@@ -3,6 +3,7 @@ target/
 
 # Local H2 database (demo data is recreated by MockData)
 data/*.db
+data/uploads/
 
 # IDE
 .idea/

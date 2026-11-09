@@ -1,39 +1,96 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!-- Shared pieces used by every page -->
 
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <title th:text="${title} + ' | CRMS'">CRMS</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b6b5d'/%3E%3Cg fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' transform='translate(4 4)'%3E%3Cpath d='M9.5 3h5M10 3v5.5L4.7 18.2A1.8 1.8 0 0 0 6.3 21h11.4a1.8 1.8 0 0 0 1.6-2.8L14 8.5V3'/%3E%3Cpath d='M7.5 14.5h9'/%3E%3C/g%3E%3C/svg%3E">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 
 <body>
 
-<header th:fragment="nav" class="topbar">
-    <a class="brand" th:href="@{/}">&#9879; CRMS</a>
-    <nav>
-        <a th:href="@{/}" th:classappend="${currentPath == '/'} ? 'active'">Dashboard</a>
-        <a th:href="@{/recipes}" th:classappend="${currentPath.startsWith('/recipes')} ? 'active'">Recipes</a>
-        <a th:href="@{/orders}" th:classappend="${currentPath.startsWith('/orders')} ? 'active'">Orders</a>
-        <a th:href="@{/reports}" th:classappend="${currentPath.startsWith('/reports')} ? 'active'">Reports</a>
-        <a th:href="@{/insights}" th:classappend="${currentPath.startsWith('/insights')} ? 'active'">AI Insights</a>
+<!-- Icon sprite: <svg class="icon"><use href="#i-name"/></svg> -->
+<svg th:fragment="icons" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9.5 3h5M10 3v5.5L4.7 18.2A1.8 1.8 0 0 0 6.3 21h11.4a1.8 1.8 0 0 0 1.6-2.8L14 8.5V3"/><path d="M7.5 14.5h9"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5" rx="1.5"/><rect x="13.5" y="11" width="7.5" height="10" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/></symbol>
+    <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20v-8M12 20V5M19 20v-5"/><path d="M3 20h18"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M11 3l1.9 5.4L18.5 10l-5.6 1.7L11 17l-1.9-5.3L3.5 10l5.6-1.6L11 3z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></symbol>
+    <symbol id="i-user-plus" viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4M20 12H9"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V7.5L14 3z"/><path d="M14 3v4.5h4.5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6L12 3z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8L12 3.5z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 8.5l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 7.5l3 3"/></symbol>
+</svg>
+
+<header th:fragment="nav" class="sidebar">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <th:block th:replace="~{fragments :: icons}"></th:block>
+
+    <a class="brand" th:href="@{/}" aria-label="CRMS home">
+        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg></span>
+        <span class="brand-text">CRMS<small>Recipe management</small></span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+        <a class="nav-link" th:href="@{/}" th:classappend="${currentPath == '/'} ? 'active'" th:attr="aria-current=${currentPath == '/'} ? 'page'">Dashboard</a>
+        <a class="nav-link" th:href="@{/recipes}" th:classappend="${currentPath.startsWith('/recipes')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/recipes')} ? 'page'">Recipes</a>
+        <a class="nav-link" th:href="@{/orders}" th:classappend="${currentPath.startsWith('/orders')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/orders')} ? 'page'">Orders</a>
+        <a class="nav-link" th:href="@{/reports}" th:classappend="${currentPath.startsWith('/reports')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/reports')} ? 'page'">Reports</a>
+        <a class="nav-link" th:href="@{/insights}" th:classappend="${currentPath.startsWith('/insights')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/insights')} ? 'page'">AI Insights</a>
         <th:block th:if="${currentUser.role.name() == 'ADMIN'}">
-            <a th:href="@{/admin/users}" th:classappend="${currentPath == '/admin/users'} ? 'active'">Users</a>
-            <a th:href="@{/admin/users/registrations}" th:classappend="${currentPath.startsWith('/admin/users/registrations')} ? 'active'">New users</a>
+        <a class="nav-link" th:href="@{/admin/users}" th:classappend="${currentPath.startsWith('/admin/users') and !currentPath.startsWith('/admin/users/registrations')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/users') and !currentPath.startsWith('/admin/users/registrations')} ? 'page'">Users</a>
+        <a class="nav-link" th:href="@{/admin/users/registrations}" th:classappend="${currentPath.startsWith('/admin/users/registrations')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/users/registrations')} ? 'page'">New users</a>
+        <a class="nav-link" th:href="@{/admin/audit}" th:classappend="${currentPath.startsWith('/admin/audit')} ? 'active'" th:attr="aria-current=${currentPath.startsWith('/admin/audit')} ? 'page'">Audit log</a>
         </th:block>
     </nav>
-    <div class="who">
-        <a th:href="@{/profile}" th:text="${currentUser.fullName}">Name</a>
-        <span class="badge" th:classappend="${currentUser.role}" th:text="${currentUser.role}">ROLE</span>
-        <form th:action="@{/logout}" method="post"><button class="link">Logout</button></form>
+
+    <div class="sidebar-user">
+        <a class="icon-btn" th:classappend="${currentPath.startsWith('/collections')} ? 'active'" th:href="@{/collections}" title="My lists" aria-label="My lists"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></a>
+        <a class="icon-btn" th:classappend="${currentPath.startsWith('/notifications')} ? 'active'" th:href="@{/notifications}" title="Notifications" th:attr="aria-label='Notifications' + (${unreadCount > 0} ? ', ' + ${unreadCount} + ' unread' : '')">
+            <svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg><span class="nav-count" th:if="${unreadCount > 0}" th:text="${unreadCount}">3</span></a>
+        <a class="icon-btn" th:classappend="${currentPath.startsWith('/settings')} ? 'active'" th:href="@{/settings}" title="Settings" aria-label="Settings"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg></a>
+        <a class="user-chip" th:href="@{/profile}" title="My profile">
+            <span class="avatar" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(currentUser.fullName, 0, 1))}">A</span>
+            <span class="user-meta"><b th:text="${currentUser.fullName}">Name</b><small th:text="${currentUser.role}">ROLE</small></span>
+        </a>
+        <form th:action="@{/logout}" method="post">
+            <button class="icon-btn" type="submit" aria-label="Log out" title="Log out"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg></button>
+        </form>
     </div>
 </header>
 
+<!-- Pager: pass a Spring Page. Keeps the current filters from the query string. -->
+<nav th:fragment="pager" class="pagination" aria-label="Pagination" th:if="${pager != null and pager.totalPages > 1}">
+    <a th:if="${pager.hasPrevious()}" th:href="${currentPath + '?' + qs + (qs.isEmpty() ? '' : '&') + 'page=' + (pager.number - 1)}">&larr; Prev</a>
+    <span class="current" aria-current="page" th:text="${pager.number + 1} + ' / ' + ${pager.totalPages}"></span>
+    <a th:if="${pager.hasNext()}" th:href="${currentPath + '?' + qs + (qs.isEmpty() ? '' : '&') + 'page=' + (pager.number + 1)}">Next &rarr;</a>
+</nav>
+
 <div th:fragment="alerts">
-    <div class="alert error" th:if="${error}" th:text="${error}"></div>
-    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+    <div class="alert error" role="alert" th:if="${error}">
+        <svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span th:text="${error}"></span>
+    </div>
+    <div class="alert success" role="status" th:if="${success}">
+        <svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span th:text="${success}"></span>
+    </div>
 </div>
 
 <!-- Report body: summary cards, chart, table per group, events by type, all events -->
@@ -45,21 +102,23 @@
         <div class="stat green"><div class="label">Money from events</div><div class="value" th:text="${#numbers.formatDecimal(report.eventRevenue(), 1, 2)} + ' €'">0</div></div>
     </div>
 
-    <div class="card" th:if="${report.rows().size() <= 31}">
+    <div class="card" th:if="${report.rows().size() <= 31 and !report.rows().isEmpty()}">
         <h2>Total revenue per <span th:text="${report.groupBy()}">month</span></h2>
-        <div class="chart">
+        <div class="chart" role="img" th:attr="aria-label='Bar chart of total revenue per ' + ${report.groupBy()} + '. The same numbers are in the table below.'">
             <div class="bar-col" th:each="r : ${report.rows()}">
                 <span class="bar-value" th:text="${#numbers.formatDecimal(r.totalRevenue(), 1, 0)}">0</span>
                 <div class="bar" th:style="'height:' + ${r.totalRevenue() * 80 / report.maxRowRevenue()} + '%'"></div>
-                <span class="bar-label" th:text="${r.label()}">label</span>
             </div>
+        </div>
+        <div class="chart-labels" aria-hidden="true">
+            <span th:each="r : ${report.rows()}" th:text="${r.label()}">label</span>
         </div>
     </div>
 
     <div class="card table-wrap">
         <h2>Grouped by <span th:text="${report.groupBy()}">month</span></h2>
         <table>
-            <thead><tr><th>Period</th><th class="num">Orders</th><th class="num">Order revenue</th><th class="num">Events</th><th class="num">Event money</th><th class="num">Total</th></tr></thead>
+            <thead><tr><th scope="col">Period</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Order revenue</th><th scope="col" class="num">Events</th><th scope="col" class="num">Event money</th><th scope="col" class="num">Total</th></tr></thead>
             <tbody>
             <tr th:each="r : ${report.rows()}">
                 <td th:text="${r.label()}"></td>
@@ -69,7 +128,7 @@
                 <td class="num" th:text="${#numbers.formatDecimal(r.eventRevenue(), 1, 2)}"></td>
                 <td class="num"><b th:text="${#numbers.formatDecimal(r.totalRevenue(), 1, 2)}"></b></td>
             </tr>
-            <tr th:if="${report.rows().isEmpty()}"><td colspan="6" class="muted">No data for this period.</td></tr>
+            <tr th:if="${report.rows().isEmpty()}"><td colspan="6" class="empty">No data for this period.</td></tr>
             </tbody>
         </table>
     </div>
@@ -78,21 +137,21 @@
         <div class="card table-wrap">
             <h2>Events by type</h2>
             <table>
-                <thead><tr><th>Type</th><th class="num">Count</th><th class="num">Money collected</th></tr></thead>
+                <thead><tr><th scope="col">Type</th><th scope="col" class="num">Count</th><th scope="col" class="num">Money collected</th></tr></thead>
                 <tbody>
                 <tr th:each="entry : ${report.eventCountByType()}">
                     <td th:text="${entry.key}"></td>
                     <td class="num" th:text="${entry.value}"></td>
                     <td class="num" th:text="${#numbers.formatDecimal(report.eventRevenueByType().get(entry.key), 1, 2)} + ' €'"></td>
                 </tr>
-                <tr th:if="${report.eventCountByType().isEmpty()}"><td colspan="3" class="muted">No events.</td></tr>
+                <tr th:if="${report.eventCountByType().isEmpty()}"><td colspan="3" class="empty">No events in this period.</td></tr>
                 </tbody>
             </table>
         </div>
         <div class="card table-wrap">
             <h2>All events (<span th:text="${report.events().size()}">0</span>)</h2>
             <table>
-                <thead><tr><th>Date</th><th>Title</th><th class="num">Tickets</th><th class="num">Money</th></tr></thead>
+                <thead><tr><th scope="col">Date</th><th scope="col">Title</th><th scope="col" class="num">Tickets</th><th scope="col" class="num">Money</th></tr></thead>
                 <tbody>
                 <tr th:each="e : ${report.events()}">
                     <td th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}"></td>
@@ -100,6 +159,7 @@
                     <td class="num" th:text="${e.ticketsSold}"></td>
                     <td class="num" th:text="${#numbers.formatDecimal(e.revenue, 1, 2)} + ' €'"></td>
                 </tr>
+                <tr th:if="${report.events().isEmpty()}"><td colspan="4" class="empty">No events in this period.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -108,10 +168,12 @@
 
 <!-- PDF buttons: view in browser or download -->
 <div th:fragment="pdfButtons(report)" class="btn-row">
-    <a class="btn light" target="_blank"
-       th:href="@{/reports/pdf(from=${report.from()}, to=${report.to()}, groupBy=${report.groupBy()})}">&#128196; View PDF</a>
+    <a class="btn light" target="_blank" rel="noopener"
+       th:href="@{/reports/pdf(from=${report.from()}, to=${report.to()}, groupBy=${report.groupBy()})}">
+        <svg class="icon" aria-hidden="true"><use href="#i-doc"/></svg>View PDF</a>
     <a class="btn"
-       th:href="@{/reports/pdf(from=${report.from()}, to=${report.to()}, groupBy=${report.groupBy()}, download=true)}">&#11015; Download PDF</a>
+       th:href="@{/reports/pdf(from=${report.from()}, to=${report.to()}, groupBy=${report.groupBy()}, download=true)}">
+        <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>Download PDF</a>
 </div>
 
 </body>

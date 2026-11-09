@@ -36,6 +36,7 @@ public class ReportService {
     }
 
     /** Statistics for a period (from - to), grouped by day, week, month or year. */
+    @org.springframework.cache.annotation.Cacheable("reports")
     public PeriodReport build(LocalDate from, LocalDate to, String groupBy) {
         if (to.isBefore(from)) {
             throw new IllegalArgumentException("'To' date must be after 'from' date.");
@@ -75,6 +76,7 @@ public class ReportService {
      * Report for the last 1, 6 or 12 whole months, ending with the month of the chosen calendar date.
      * The chosen date cannot be in the future or more than 12 months back.
      */
+    @org.springframework.cache.annotation.Cacheable("reports")
     public PeriodReport monthly(int months, LocalDate date) {
         if (!MONTH_OPTIONS.contains(months)) {
             months = 1;

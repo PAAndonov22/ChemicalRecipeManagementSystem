@@ -34,7 +34,8 @@ public final class DtoMapper {
             .sorted()
             .toList();
         return new RecipeDto(recipe.getId(), recipe.getCode(), recipe.getName(), recipe.getDescription(),
-            recipe.getPrice(), lines, categories, toSafetyDataSheetDto(recipe.getSafetyDataSheet()));
+            recipe.getPrice(), lines, categories, toSafetyDataSheetDto(recipe.getSafetyDataSheet()),
+            recipe.getVersion(), recipe.getStatus() == null ? null : recipe.getStatus().name(), recipe.getDeletedAt(), recipe.getDeletedBy());
     }
 
     public static RecipeIngredientDto toRecipeIngredientDto(RecipeIngredient line) {
@@ -54,6 +55,7 @@ public final class DtoMapper {
     public static RecipeForm toRecipeForm(Recipe recipe) {
         RecipeForm form = new RecipeForm();
         form.setId(recipe.getId());
+        form.setVersion(recipe.getVersion());
         form.setCode(recipe.getCode());
         form.setName(recipe.getName());
         form.setDescription(recipe.getDescription());

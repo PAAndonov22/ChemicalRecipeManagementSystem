@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('My lists')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <div class="page-head"><div><h1>My lists</h1><p class="subtitle">Favorites and your own lists of recipes.</p></div></div>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <section class="card">
+        <form th:action="@{/collections}" method="post" class="filters">
+            <label class="grow">New list <input name="name" maxlength="60" required placeholder="e.g. Winter products"></label>
+            <button class="btn" type="submit">Create list</button>
+        </form>
+    </section>
+    <section class="card" th:each="l : ${lists}">
+        <h2 th:text="${l.name}">List</h2>
+        <ul class="plain">
+            <li th:each="r : ${l.recipes}"><a th:href="@{/recipes/{id}(id=${r.id})}" th:text="${r.code} + ' · ' + ${r.name}"></a>
+                <form th:action="@{/collections/{id}/remove(id=${l.id})}" method="post" style="display:inline"><input type="hidden" name="recipeId" th:value="${r.id}"><button class="link-btn" type="submit">remove</button></form></li>
+            <li class="muted" th:if="${l.recipes.isEmpty()}">Empty. Open a recipe and add it here.</li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

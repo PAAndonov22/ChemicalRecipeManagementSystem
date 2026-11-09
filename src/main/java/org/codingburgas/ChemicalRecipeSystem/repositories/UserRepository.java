@@ -30,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime since);
 
     long countByCreatedAtAfter(LocalDateTime since);
+
+    List<User> findByRoleAndActiveTrue(Role role);
 }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('Import')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <a class="back-link" th:href="@{/recipes}"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Back to recipes</a>
+    <div class="page-head"><div><h1>Import recipes</h1>
+        <p class="subtitle">Upload a CSV or XLSX file, check the preview, then confirm. Nothing is saved before you confirm.</p></div>
+        <a class="btn light" th:href="@{/recipes/import/template}">Download template</a></div>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <section class="card">
+        <form th:action="@{/recipes/import/preview}" method="post" enctype="multipart/form-data" class="filters">
+            <label class="grow">File (.csv or .xlsx, max 500 rows) <input type="file" name="file" accept=".csv,.xlsx" required></label>
+            <button class="btn" type="submit">Preview</button>
+        </form>
+    </section>
+    <th:block th:if="${preview != null}">
+        <div class="grid">
+            <div class="stat green"><div class="label">Ready</div><div class="value" th:text="${preview.count('OK')}">0</div></div>
+            <div class="stat amber"><div class="label">Duplicates</div><div class="value" th:text="${preview.count('DUPLICATE')}">0</div></div>
+            <div class="stat"><div class="label">Errors</div><div class="value" th:text="${preview.count('ERROR')}">0</div></div>
+        </div>
+        <div class="card table-wrap">
+            <table><thead><tr><th scope="col">Line</th><th scope="col">Code</th><th scope="col">Name</th><th scope="col">Result</th><th scope="col">Problem</th></tr></thead>
+                <tbody><tr th:each="r : ${preview.rows}"><td th:text="${r.line}"></td><td th:text="${r.code}"></td><td th:text="${r.name}"></td>
+                    <td><span class="badge dot" th:classappend="${r.status == 'OK'} ? 'on' : (${r.status == 'ERROR'} ? 'HIGH' : 'MEDIUM')" th:text="${r.status}"></span></td>
+                    <td class="wrap muted" th:text="${r.message}"></td></tr></tbody></table>
+        </div>
+        <form th:action="@{/recipes/import/commit}" method="post" class="filters">
+            <label>Mode <select name="mode"><option value="atomic">All or nothing</option><option value="partial">Import valid rows, skip the rest</option></select></label>
+            <button class="btn" type="submit">Import</button>
+        </form>
+    </th:block>
+</main>
+</body>
+</html>

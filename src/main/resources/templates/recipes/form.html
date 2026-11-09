@@ -1,45 +1,70 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
 <head th:replace="~{fragments :: head('Recipe')}"></head>
 <body>
 <header th:replace="~{fragments :: nav}"></header>
-<main>
-    <p><a th:href="@{/recipes}">&larr; Back to recipes</a></p>
-    <div th:replace="~{fragments :: alerts}"></div>
-    <div class="card">
-        <h1 th:text="${recipe.id == null} ? 'New recipe' : 'Edit ' + ${recipe.name}">Recipe</h1>
-        <form th:action="@{/recipes/save}" th:object="${recipe}" method="post" class="form-grid">
-            <input type="hidden" th:field="*{id}">
-            <label>Code <input th:field="*{code}" required></label>
-            <label>Name <input th:field="*{name}" required></label>
-            <label>Price per litre (€) <input type="number" step="0.01" min="0.01" th:field="*{price}" required></label>
-            <div></div>
-            <label class="full">Ingredients per litre &mdash; one per line: <code>name, quantity, unit</code>
-                <textarea th:field="*{ingredients}" rows="6" required
-                          placeholder="Distilled Water, 900, ml&#10;Glycerin, 100, ml"></textarea>
-            </label>
-            <label class="full">Description <textarea th:field="*{description}" rows="3"></textarea></label>
-
-            <fieldset class="full checks">
-                <legend>Categories</legend>
-                <label th:each="c : ${categories}">
-                    <input type="checkbox" th:field="*{categoryIds}" th:value="${c.id}">
-                    <span th:text="${c.name}" th:title="${c.description}">Category</span>
-                </label>
-            </fieldset>
-
-            <h2 class="full">Safety data sheet</h2>
-            <label>Hazard class <input th:field="*{hazardClass}" placeholder="Flammable liquid, Cat. 2"></label>
-            <label>Signal word
-                <select th:field="*{signalWord}">
-                    <option th:each="w : ${signalWords}" th:value="${w}" th:text="${w}"></option>
-                </select>
-            </label>
-            <label class="full">Storage conditions <input th:field="*{storageConditions}"></label>
-            <label class="full">Protective equipment <input th:field="*{protectiveEquipment}"></label>
-            <div class="full"><button class="btn">Save</button></div>
-        </form>
+<main id="main">
+    <a class="back-link" th:href="@{/recipes}"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Back to recipes</a>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${recipe.id == null} ? 'New recipe' : 'Edit ' + ${recipe.name}">Recipe</h1>
+            <p class="subtitle">Ingredients, categories and the safety data sheet are saved together.</p>
+        </div>
     </div>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <form th:action="@{/recipes/save}" th:object="${recipe}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <input type="hidden" th:field="*{version}">
+
+        <section class="card">
+            <h2>Basics</h2>
+            <div class="form-grid">
+                <label>Code <input th:field="*{code}" required placeholder="RX-1011"></label>
+                <label>Name <input th:field="*{name}" required></label>
+                <label>Price per litre (€) <input type="number" step="0.01" min="0.01" th:field="*{price}" required></label>
+                <div></div>
+                <label class="full">Description <textarea th:field="*{description}" rows="3"></textarea></label>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Ingredients</h2>
+            <div class="form-grid">
+                <label class="full">Ingredients per litre
+                    <span class="hint">One per line: <code>name, quantity, unit</code></span>
+                    <textarea th:field="*{ingredients}" rows="6" required
+                              placeholder="Distilled Water, 900, ml&#10;Glycerin, 100, ml"></textarea>
+                </label>
+                <fieldset class="full checks">
+                    <legend>Categories</legend>
+                    <label th:each="c : ${categories}">
+                        <input type="checkbox" th:field="*{categoryIds}" th:value="${c.id}">
+                        <span th:text="${c.name}" th:title="${c.description}">Category</span>
+                    </label>
+                </fieldset>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Safety data sheet</h2>
+            <div class="form-grid">
+                <label>Hazard class <input th:field="*{hazardClass}" placeholder="Flammable liquid, Cat. 2"></label>
+                <label>Signal word
+                    <select th:field="*{signalWord}">
+                        <option th:each="w : ${signalWords}" th:value="${w}" th:text="${w}"></option>
+                    </select>
+                </label>
+                <label class="full">Storage conditions <input th:field="*{storageConditions}"></label>
+                <label class="full">Protective equipment <input th:field="*{protectiveEquipment}"></label>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button class="btn" type="submit">Save recipe</button>
+            <a class="btn light" th:href="@{/recipes}">Cancel</a>
+        </div>
+    </form>
 </main>
 </body>
 </html>

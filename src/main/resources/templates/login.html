@@ -1,17 +1,66 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Login')}"></head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('Log in')}"></head>
 <body class="login-page">
-<div class="card login-box">
-    <h1>&#9879; CRMS</h1>
-    <p class="subtitle">Chemical Recipe Management System</p>
-    <div class="alert error" th:if="${error}" th:text="${error}"></div>
-    <form th:action="@{/login}" method="post">
-        <label>Email <input type="email" name="email" value="admin@crms.local" required></label>
-        <label>Password <input type="password" name="password" required></label>
-        <button class="btn big">Log in</button>
-    </form>
-    <p class="hint">Demo: admin@crms.local / Admin123! &middot; others (chemist, vet, reception, technician @crms.local) / Pass123!</p>
-</div>
+<th:block th:replace="~{fragments :: icons}"></th:block>
+<main id="main" class="login-shell">
+    <section class="login-brand">
+        <div class="brand">
+            <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg></span>
+            <span class="brand-text">CRMS<small>Recipe management</small></span>
+        </div>
+        <div>
+            <h2>Recipes, orders and safety data in one place.</h2>
+            <p>Manage chemical formulations with their safety data sheets, track orders and events, and report revenue.</p>
+            <ul class="login-points">
+                <li><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>A safety data sheet with every recipe</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Reports by week, month or year, exportable to PDF</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>Role-based access for lab, vet and front desk</li>
+            </ul>
+        </div>
+        <p class="login-foot">Demo environment &mdash; data is stored locally in H2.</p>
+    </section>
+
+    <section class="login-panel">
+        <div class="login-box">
+            <h1>Log in</h1>
+            <p class="subtitle">Use your CRMS account.</p>
+            <div class="alert error flush-bottom" role="alert" th:if="${error}">
+                <svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span th:text="${error}"></span>
+            </div>
+            <form id="login-form" th:action="@{/login}" method="post">
+                <label>Email
+                    <input type="email" name="email" value="admin@crms.local" autocomplete="username" required>
+                </label>
+                <label>Password
+                    <input type="password" name="password" autocomplete="current-password" required autofocus>
+                </label>
+                <button class="btn big" type="submit">Log in</button>
+            </form>
+
+            <details class="demo">
+                <summary>Demo accounts</summary>
+                <ul>
+                    <li><button type="button" data-email="admin@crms.local" data-password="Admin123!"><span>admin@crms.local</span><span>Admin</span></button></li>
+                    <li><button type="button" data-email="chemist@crms.local" data-password="Pass123!"><span>chemist@crms.local</span><span>Chemist</span></button></li>
+                    <li><button type="button" data-email="technician@crms.local" data-password="Pass123!"><span>technician@crms.local</span><span>Technician</span></button></li>
+                    <li><button type="button" data-email="vet@crms.local" data-password="Pass123!"><span>vet@crms.local</span><span>Vet</span></button></li>
+                    <li><button type="button" data-email="reception@crms.local" data-password="Pass123!"><span>reception@crms.local</span><span>Reception</span></button></li>
+                </ul>
+                <span>Click an account to fill the form.</span>
+            </details>
+        </div>
+    </section>
+</main>
+<script>
+    document.querySelectorAll('.demo button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var form = document.getElementById('login-form');
+            form.elements.email.value = button.dataset.email;
+            form.elements.password.value = button.dataset.password;
+            form.querySelector('button[type=submit]').focus();
+        });
+    });
+</script>
 </body>
 </html>

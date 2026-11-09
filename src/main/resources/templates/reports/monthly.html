@@ -1,50 +1,53 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
 <head th:replace="~{fragments :: head('Monthly reports')}"></head>
 <body>
 <header th:replace="~{fragments :: nav}"></header>
-<main>
+<main id="main">
     <div class="page-head">
         <div>
-            <h1>Reports &mdash; 1, 6 or 12 months</h1>
+            <h1>Reports</h1>
             <p class="subtitle">
                 Pick a date in the calendar. The report covers whole months ending with that month
                 (<b th:text="${#temporals.format(report.from(), 'dd.MM.yyyy')}"></b> &ndash;
                 <b th:text="${#temporals.format(report.to(), 'dd.MM.yyyy')}"></b>).
             </p>
         </div>
-        <div class="tabs">
+        <nav class="tabs" aria-label="Report type">
             <a th:href="@{/reports}">Statistics</a>
-            <a class="active" th:href="@{/reports/monthly}">1 / 6 / 12 months</a>
-        </div>
+            <a class="active" aria-current="page" th:href="@{/reports/monthly}">1 / 6 / 12 months</a>
+        </nav>
     </div>
 
     <div class="two-cols">
-        <div class="card">
+        <section class="card">
             <h2>Period</h2>
-            <div class="tabs">
+            <nav class="tabs" aria-label="Number of months">
                 <a th:each="m : ${monthOptions}" th:href="@{/reports/monthly(months=${m}, date=${selected})}"
-                   th:classappend="${m == months} ? 'active'" th:text="${m == 1 ? '1 month' : m + ' months'}">1 month</a>
-            </div>
-            <br>
-            <div class="grid" style="margin-bottom: 0">
+                   th:classappend="${m == months} ? 'active'" th:attr="aria-current=${m == months} ? 'page'"
+                   th:text="${m == 1 ? '1 month' : m + ' months'}">1 month</a>
+            </nav>
+            <div class="grid flush spaced">
                 <div class="stat green"><div class="label">Total money</div><div class="value" th:text="${#numbers.formatDecimal(report.totalRevenue(), 1, 2)} + ' €'">0</div></div>
             </div>
-            <br>
             <div th:replace="~{fragments :: pdfButtons(${report})}"></div>
-        </div>
+        </section>
 
-        <!-- Calendar: green days have events, the selected day is blue -->
-        <div class="card">
+        <!-- Calendar: a dot marks days with events, the selected day is filled -->
+        <section class="card">
             <div class="calendar-head">
-                <a class="btn light" th:if="${!prevMonth.isBefore(minDate.withDayOfMonth(1))}" th:href="@{/reports/monthly(months=${months}, date=${prevMonth})}">&larr;</a>
+                <a class="btn light sm" th:if="${!prevMonth.isBefore(minDate.withDayOfMonth(1))}"
+                   th:href="@{/reports/monthly(months=${months}, date=${prevMonth})}" aria-label="Previous month">
+                    <svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg></a>
                 <span th:unless="${!prevMonth.isBefore(minDate.withDayOfMonth(1))}"></span>
-                <h2 style="margin: 0" th:text="${#temporals.format(calendarMonth.atDay(1), 'MMMM yyyy')}">Month</h2>
-                <a class="btn light" th:if="${!nextMonth.isAfter(today)}" th:href="@{/reports/monthly(months=${months}, date=${nextMonth})}">&rarr;</a>
+                <h2 th:text="${#temporals.format(calendarMonth.atDay(1), 'MMMM yyyy')}">Month</h2>
+                <a class="btn light sm" th:if="${!nextMonth.isAfter(today)}"
+                   th:href="@{/reports/monthly(months=${months}, date=${nextMonth})}" aria-label="Next month">
+                    <svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
                 <span th:unless="${!nextMonth.isAfter(today)}"></span>
             </div>
             <table class="calendar">
-                <thead><tr><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th><th>Su</th></tr></thead>
+                <thead><tr><th scope="col">Mo</th><th scope="col">Tu</th><th scope="col">We</th><th scope="col">Th</th><th scope="col">Fr</th><th scope="col">Sa</th><th scope="col">Su</th></tr></thead>
                 <tbody>
                 <tr th:each="week : ${weeks}">
                     <td th:each="day : ${week}">
@@ -52,6 +55,7 @@
                             <a th:if="${!day.isAfter(today) and !day.isBefore(minDate)}"
                                th:href="@{/reports/monthly(months=${months}, date=${day})}"
                                th:classappend="${(eventDays.contains(day) ? 'has-event ' : '') + (day == selected ? 'selected' : '')}"
+                               th:attr="aria-current=${day == selected} ? 'date', title=${eventDays.contains(day)} ? 'Has events'"
                                th:text="${day.dayOfMonth}">1</a>
                             <span th:unless="${!day.isAfter(today) and !day.isBefore(minDate)}" class="disabled" th:text="${day.dayOfMonth}">1</span>
                         </th:block>
@@ -59,7 +63,8 @@
                 </tr>
                 </tbody>
             </table>
-        </div>
+            <p class="legend"><span><i></i>Day with events</span></p>
+        </section>
     </div>
 
     <div th:replace="~{fragments :: reportBody(${report})}"></div>

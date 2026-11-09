@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${uiTheme}">
+<head th:replace="~{fragments :: head('History')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main id="main">
+    <a class="back-link" th:href="@{/recipes/{id}(id=${recipe.id})}"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Back to the recipe</a>
+    <div class="page-head"><div><h1>History of <span th:text="${recipe.name}"></span></h1>
+        <p class="subtitle">Every save is a version. Restoring one creates a new version, nothing is lost.</p></div></div>
+    <div th:replace="~{fragments :: alerts}"></div>
+    <section class="card">
+        <form th:action="@{/recipes/{id}/history(id=${recipe.id})}" method="get" class="filters">
+            <label>Compare <select name="a"><option th:each="v : ${versions}" th:value="${v.no}" th:text="'Version ' + ${v.no}" th:selected="${v.no == a}"></option></select></label>
+            <label>with <select name="b"><option th:each="v : ${versions}" th:value="${v.no}" th:text="'Version ' + ${v.no}" th:selected="${v.no == b}"></option></select></label>
+            <button class="btn" type="submit">Compare</button>
+        </form>
+    </section>
+    <div class="card table-wrap" th:if="${diff != null}">
+        <h2>Version <span th:text="${a}"></span> &rarr; <span th:text="${b}"></span></h2>
+        <table><thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+            <tbody><tr th:each="d : ${diff}" th:classappend="${d.changed} ? 'changed'">
+                <td th:text="${d.field}"></td><td class="wrap" th:text="${d.before}"></td><td class="wrap" th:text="${d.after}"></td></tr></tbody></table>
+    </div>
+    <div class="card table-wrap">
+        <table><thead><tr><th scope="col">Version</th><th scope="col">When</th><th scope="col">By</th><th scope="col">Note</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody><tr th:each="v : ${versions}">
+                <td th:text="${v.no}"></td><td th:text="${#temporals.format(v.at, 'dd.MM.yyyy HH:mm')}"></td><td th:text="${v.by}"></td><td th:text="${v.note}"></td>
+                <td class="actions"><form th:if="${can.contains('RECIPE_WRITE')}" th:action="@{/recipes/{id}/versions/{no}/restore(id=${recipe.id}, no=${v.no})}" method="post"
+                      onsubmit="return confirm('Restore this version as a new version?')"><button class="btn light sm" type="submit">Restore</button></form></td></tr></tbody></table>
+    </div>
+</main>
+</body>
+</html>

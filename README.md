@@ -23,6 +23,17 @@ Demo data comes from `MockData.java` and is saved in `data/`. Delete `data/` to 
 > **Upgrading from an older version?** The database tables changed (new entities and relations). Stop the app and delete everything in `data/` except `.gitkeep` once, otherwise startup fails.
 Tests: `./mvnw test`
 
+## Features
+
+- **Access control**: roles map to permissions (`config/Permissions`), enforced on the server with `@RequirePermission`; missing rights give a 403 page / HTTP 403. ADMIN = everything, CHEMIST = editor, TECHNICIAN / VET / RECEPTION = read-only users.
+- **Recipes**: combined search (category, signal word, status, price, text) with sorting and paging, soft delete + trash, optimistic locking (conflict message when two people edit), approval workflow (DRAFT, IN_REVIEW, APPROVED, REJECTED) with decision history, version history with diff and restore.
+- **Files, comments, lists**: PDF/PNG/JPG attachments (5 MB, checked by signature), threaded comments, favorites and personal lists.
+- **Notifications and reminders**: in-app notifications with unread badge; a scheduled job (`ReminderService`, hourly, Europe/Sofia) reports recipes waiting too long for review, without duplicates.
+- **Import / export**: CSV and Excel export (follows the filters), CSV/XLSX import with preview, duplicate detection and all-or-nothing mode.
+- **Dashboard**: KPIs and Chart.js charts (served locally from `static/js`), cached queries.
+- **Audit log** (`/admin/audit`), **settings** (theme, rows per page, notifications), **REST API** under `/api/v1` (OpenAPI docs: `/swagger-ui.html`, log in first).
+- Not implemented: a language switch (task 14) - the UI is English only.
+
 ## Project structure (MVC)
 
 ```text

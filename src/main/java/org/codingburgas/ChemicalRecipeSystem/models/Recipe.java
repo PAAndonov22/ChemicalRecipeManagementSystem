@@ -8,9 +8,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Version;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -57,6 +63,24 @@ public class Recipe extends BaseEntity {
     @JoinColumn(name = "safety_data_sheet_id", unique = true)
     private SafetyDataSheet safetyDataSheet;
 
+    /** Optimistic locking: JPA raises a conflict when two people save the same recipe version. */
+    @Version
+    private Long version;
+
+    /** Approval workflow state. */
+    @Enumerated(EnumType.STRING)
+    private RecipeStatus status = RecipeStatus.DRAFT;
+
+    private LocalDateTime statusChangedAt = LocalDateTime.now();
+
+    /** Soft delete: a recipe with deletedAt != null is in the trash. */
+    private LocalDateTime deletedAt;
+    private String deletedBy;
+
+    /** The employee who created the recipe. */
+    @ManyToOne
+    private User owner;
+
     /** Adds a line "quantity unit of ingredient" to this recipe and returns it. */
     public RecipeIngredient addIngredient(Ingredient ingredient, double quantity, String unit) {
         RecipeIngredient line = new RecipeIngredient(this, ingredient, quantity, unit);
@@ -93,4 +117,16 @@ public class Recipe extends BaseEntity {
     public Set<Category> getCategories() { return Collections.unmodifiableSet(categories); }
     public SafetyDataSheet getSafetyDataSheet() { return safetyDataSheet; }
     public void setSafetyDataSheet(SafetyDataSheet safetyDataSheet) { this.safetyDataSheet = safetyDataSheet; }
+
+    public Long getVersion() { return version; }
+    public RecipeStatus getStatus() { return status; }
+    public void setStatus(RecipeStatus status) { this.status = status; this.statusChangedAt = LocalDateTime.now(); }
+    public LocalDateTime getStatusChangedAt() { return statusChangedAt; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public String getDeletedBy() { return deletedBy; }
+    public boolean isDeleted() { return deletedAt != null; }
+    public void markDeleted(String by) { this.deletedAt = LocalDateTime.now(); this.deletedBy = by; }
+    public void restore() { this.deletedAt = null; this.deletedBy = null; }
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
 }

@@ -18,9 +18,11 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class AuthController {
     private final UserService userService;
+    private final org.codingburgas.ChemicalRecipeSystem.services.PreferencesService preferences;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, org.codingburgas.ChemicalRecipeSystem.services.PreferencesService preferences) {
         this.userService = userService;
+        this.preferences = preferences;
     }
 
     @GetMapping("/login")
@@ -36,6 +38,7 @@ public class AuthController {
             return "login";
         }
         session.setAttribute("user", user.get());
+        session.setAttribute("prefs", preferences.get(user.get().getId()));
         return "redirect:/";
     }
 
